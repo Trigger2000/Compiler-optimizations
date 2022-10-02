@@ -4,9 +4,10 @@ project(ir_builder)
 
 set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/compiler_opt.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/inst.cpp
 )
 
-add_compile_options(-std=c++1z)
+add_compile_options(-std=c++1z -Wno-pointer-arith -g)
 
 add_executable(ir_builder ${SOURCES})
 

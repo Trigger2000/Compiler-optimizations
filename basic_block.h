@@ -1,8 +1,13 @@
 #ifndef BASIC_BLOCK_H
 #define BASIC_BLOCK_H
 
-class BasicBlock {
+#include "inst.h"
 
+class InstNode;
+
+class BasicBlock {
+private:
+    InstNode *first_inst = 0;
 };
 
 
