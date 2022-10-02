@@ -6,16 +6,9 @@
 #define UNREACHABLE()                                                   \
     do {                                                                \
         std::cerr << "this line should be unreachable" << std::endl;    \
-        std::cerr << __FILE__ << " " << __LINE__ << std::endl;             \
+        std::cerr << __FILE__ << " " << __LINE__ << std::endl;          \
     } while(0);
 
-
-
-class IntrusiveListNode {
-public:
-    IntrusiveListNode *next;
-    IntrusiveListNode *prev;
-};
 
 class IdCounter {
 public:

@@ -1,6 +1,15 @@
 #ifndef OPCODES_H
 #define OPCODES_H
 
+#define TYPE_LIST(FUNC)         \
+    FUNC(InstBinOp)             \
+    FUNC(InstBinOpImm)          \
+    FUNC(InstControlJmp)        \
+    FUNC(InstControlRet)        \
+    FUNC(InstUtil)              \
+    FUNC(InstUtilImm)           \
+
+
 #define OPCODE_LIST(FUNC)       \
 /* Arithmetic */                \
     FUNC(ADD, InstBinOp)        \
@@ -26,6 +35,13 @@ enum class Opcode {
     #define INIT_OPCODES(name, type) name,
     OPCODE_LIST(INIT_OPCODES)
     #undef INIT_OPCODES
+};
+
+enum class Type {
+    DEFAULT,
+    #define INIT_TYPES(type) type,
+    TYPE_LIST(INIT_TYPES)
+    #undef INIT_TYPES
 };
 
 #endif // OPCODES_H
