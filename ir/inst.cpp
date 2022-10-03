@@ -1,55 +1,55 @@
 #include "inst.h"
 
-void Inst::throw_error(std::string msg, Opcode op_in) {
-    #define ERROR_INST(name, type)                                  \
-    if (Opcode::name == op_in) {                                    \
-        std::cerr << msg << #name << std::endl;                     \
-        std::abort();                                               \
+void Inst::throw_error(std::string msg, Opcode op_in)
+{
+#define ERROR_INST(name, type)                                                                                         \
+    if (Opcode::name == op_in) {                                                                                       \
+        std::cerr << msg << #name << std::endl;                                                                        \
+        std::abort();                                                                                                  \
     }
     OPCODE_LIST(ERROR_INST)
-    #undef ERROR_INST
+#undef ERROR_INST
 }
 
-void Inst::PrintOpcode() {
+void Inst::PrintOpcode()
+{
     std::cout << bb_id << ":" << id << " ";
-    #define PRINT_OPCODE(name, type)                                \
-    if (Opcode::name == op) {                                       \
-        std::cout << #name << " ";                                  \
-        return;                                                     \
+#define PRINT_OPCODE(name, type)                                                                                       \
+    if (Opcode::name == op) {                                                                                          \
+        std::cout << #name << " ";                                                                                     \
+        return;                                                                                                        \
     }
     OPCODE_LIST(PRINT_OPCODE)
-    #undef PRINT_OPCODE
+#undef PRINT_OPCODE
 }
 
-void InstNode::InstDestroyer(InstNode *inst_node)
+void InstNode::InstDestroyer(InstNode* inst_node)
 {
     assert(inst_node != nullptr);
     size_t node_offset = offsetof(Inst, inst_node);
 
-    #define DESTROY_INST(type)                                                              \
-    case Type::type:                                                                        \
-        delete reinterpret_cast<type*>(reinterpret_cast<void*>(inst_node) - node_offset);   \
+#define DESTROY_INST(type)                                                                                             \
+    case Type::type:                                                                                                   \
+        delete reinterpret_cast<type*>(reinterpret_cast<void*>(inst_node) - node_offset);                              \
         break;
 
-    switch (inst_node->GetType())
-    {
+    switch (inst_node->GetType()) {
         TYPE_LIST(DESTROY_INST)
     }
 
-    #undef DESTROY_INST
+#undef DESTROY_INST
 }
 
 void InstNode::Dump()
 {
     size_t node_offset = offsetof(Inst, inst_node);
 
-    #define DUMP_INST(type)                                                             \
-    case Type::type:                                                                    \
-        reinterpret_cast<type*>(reinterpret_cast<void*>(this) - node_offset)->Dump();   \
+#define DUMP_INST(type)                                                                                                \
+    case Type::type:                                                                                                   \
+        reinterpret_cast<type*>(reinterpret_cast<void*>(this) - node_offset)->Dump();                                  \
         return;
 
-    switch (GetType())
-    {
+    switch (GetType()) {
         TYPE_LIST(DUMP_INST)
     }
 
@@ -100,8 +100,7 @@ uint32_t InstNode::GetDstReg()
         Inst::throw_error("No DstReg in ", GetOpcode());
     }
     size_t node_offset = offsetof(Inst, inst_node);
-    switch (type)
-    {
+    switch (type) {
     case Type::InstBinOp:
         return reinterpret_cast<InstBinOp*>(reinterpret_cast<void*>(this) - node_offset)->GetDstReg();
         break;
@@ -120,8 +119,7 @@ uint32_t InstNode::GetSrcReg1()
         Inst::throw_error("No SrcReg1 in ", GetOpcode());
     }
     size_t node_offset = offsetof(Inst, inst_node);
-    switch (type)
-    {
+    switch (type) {
     case Type::InstBinOp:
         return reinterpret_cast<InstBinOp*>(reinterpret_cast<void*>(this) - node_offset)->GetSrcReg1();
         break;
@@ -146,8 +144,7 @@ uint32_t InstNode::GetSrcReg2()
         Inst::throw_error("No SrcReg2 in ", GetOpcode());
     }
     size_t node_offset = offsetof(Inst, inst_node);
-    switch (type)
-    {
+    switch (type) {
     case Type::InstBinOp:
         return reinterpret_cast<InstBinOp*>(reinterpret_cast<void*>(this) - node_offset)->GetSrcReg2();
         break;
@@ -186,8 +183,7 @@ uint32_t InstNode::GetImm()
         Inst::throw_error("No Imm in ", GetOpcode());
     }
     size_t node_offset = offsetof(Inst, inst_node);
-    switch (type)
-    {
+    switch (type) {
     case Type::InstBinOpImm:
         return reinterpret_cast<InstBinOpImm*>(reinterpret_cast<void*>(this) - node_offset)->GetImm();
         break;
