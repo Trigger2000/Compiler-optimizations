@@ -7,43 +7,41 @@
 #include <utility>
 
 #include "opcode.h"
-// #include "basic_block.h"
 #include "utils.h"
-
-// class BasicBlock;
 
 class InstNode {
 public:
-    template <typename...inputs>
+    template <uint32_t ins_id, typename...inputs>
     static InstNode *InstBuilder(const Opcode op_in, inputs...in_range);
-
-     // TODO variadic non-type template or variadic function?
     static void InstDestroyer(InstNode *inst_node);
-
-    uint32_t GetId();
-    Opcode GetOpcode();
-    // BasicBlock *GetBasicBlock();
-    Type GetType();
 
     InstNode *GetNext()
     {
-        return next;
+        return next_;
     }
 
     InstNode *GetPrev()
     {
-        return prev;
+        return prev_;
     }
 
-    void SetNext(InstNode *next_in)
+    void SetNext(InstNode *next)
     {
-        next = next_in;
+        next_ = next;
     }
 
-    void SetPrev(InstNode *prev_in)
+    void SetPrev(InstNode *prev)
     {
-        prev = prev_in;
+        prev_ = prev;
     }
+
+    void SetBBid(uint32_t bb_id);
+    void Dump();
+
+    uint32_t GetId();
+    uint32_t GetBBId();
+    Opcode GetOpcode();
+    Type GetType();
 
     uint32_t GetDstReg();
     uint32_t GetSrcReg1();
@@ -56,10 +54,10 @@ private:
     friend class Inst;
 
     InstNode() = default;
-    InstNode(InstNode &in) = default;
+    InstNode(InstNode &inst_node) = default;
 
-    InstNode *next = nullptr;
-    InstNode *prev = nullptr;
+    InstNode *next_ = nullptr;
+    InstNode *prev_ = nullptr;
 };
 
 
@@ -69,6 +67,7 @@ protected:
     Inst(Inst &inst) = default;
     Inst(uint32_t id, Opcode op, Type type): id(id), op(op), type(type) {}
 
+    void PrintOpcode();
     static void throw_error(std::string msg, Opcode op_in);
 
 private:
@@ -76,9 +75,9 @@ private:
 
     InstNode inst_node;
     uint32_t id = 0;
+    uint32_t bb_id = 0;
     Opcode op = Opcode::DEFAULT;
     Type type = Type::DEFAULT;
-    // BasicBlock *bb = nullptr;
 };
 
 
@@ -100,6 +99,12 @@ public:
     uint32_t GetSrcReg2()
     {
         return src_reg2;
+    }
+
+    void Dump()
+    {
+        PrintOpcode();    
+        std::cout << dst_reg << " " << src_reg1 << " " << src_reg2 << "\n";
     }
 
 private:
@@ -133,6 +138,12 @@ public:
         return imm;
     }
 
+    void Dump()
+    {
+        PrintOpcode();
+        std::cout << dst_reg << " " << src_reg1 << " " << imm << "\n";
+    }
+
 private:
     InstBinOpImm(uint32_t id, Opcode op, Type type, uint32_t dst_reg, uint32_t src_reg, uint32_t imm):
     Inst(id, op, type), dst_reg(dst_reg), src_reg1(src_reg), imm(imm) {}
@@ -154,13 +165,18 @@ public:
         return bb_id;
     }
 
+    void Dump()
+    {
+        PrintOpcode();
+        std::cout << bb_id << "\n";
+    }
+
 private:
     InstControlJmp(uint32_t id, Opcode op, Type type, uint32_t bb_id):
     Inst(id, op, type), bb_id(bb_id) {}
 
     static const uint32_t INPUTS_COUNT = 1;
     uint32_t bb_id = 0;
-    // BasicBlock *dst;
 };
 
 
@@ -172,6 +188,12 @@ public:
     uint32_t GetRetValReg()
     {
         return ret_val_reg;
+    }
+
+    void Dump()
+    {
+        PrintOpcode();
+        std::cout << ret_val_reg << "\n";
     }
 
 private:
@@ -196,6 +218,12 @@ public:
     uint32_t GetSrcReg2()
     {
         return src_reg2;
+    }
+
+    void Dump()
+    {
+        PrintOpcode();
+        std::cout << src_reg1 << " " << src_reg2 << "\n";
     }
 
 private:
@@ -223,6 +251,12 @@ public:
         return imm;
     }
 
+    void Dump()
+    {
+        PrintOpcode();
+        std::cout << src_reg1 << " " << imm << "\n";
+    }
+
 private:
     InstUtilImm(uint32_t id, Opcode op, Type type, uint32_t reg1, uint32_t imm):
     Inst(id, op, type), src_reg1(reg1), imm(imm) {}
@@ -233,13 +267,11 @@ private:
 };
 
 
-template <typename... inputs>
+template <uint32_t ins_id, typename... inputs>
 InstNode *InstNode::InstBuilder(const Opcode op_in, inputs... inputs_range) {
-    uint32_t new_id = IdCounter::AssignId();
-
         #define BUILD_INST(name, type)                                          \
         if (Opcode::name == op_in) {                                            \
-            type *new_inst = type::CreateInst(new_id, op_in, inputs_range...);  \
+            type *new_inst = type::CreateInst(ins_id, op_in, inputs_range...);  \
             return &new_inst->inst_node;                                        \
         }
 
