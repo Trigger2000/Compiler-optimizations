@@ -6,15 +6,15 @@
 #include <vector>
 #include <iostream>
 
-#include "graph.h"
 #include "inst.h"
-
-class InstNode;
 
 template <uint32_t bb_id, uint32_t... successors>
 class BasicBlock {
 public:
     BasicBlock(std::initializer_list<InstNode*> insts);
+
+    void Dump();
+    void Clear();
 
     InstNode *GetFirstinst() const
     {
@@ -41,7 +41,7 @@ private:
     InstNode *first_inst = nullptr;
     InstNode *last_inst = nullptr;
     InstNode *first_phi = nullptr;
-    Graph *graph = nullptr;
+    // Graph *graph = nullptr;
 
     uint32_t id = 0;
 };
@@ -58,8 +58,13 @@ BasicBlock<bb_id, successors...>::BasicBlock(std::initializer_list<InstNode*> in
     last_inst = *(std::prev(insts.end(), 1));
     first_inst->SetNext(*(std::next(insts.begin(), 1)));
     last_inst->SetPrev(*(std::prev(insts.end(), 2)));
+    first_inst->SetBBid(bb_id);
+    last_inst->SetBBid(bb_id);
+
     for (auto item = std::next(insts.begin(), 1); item < std::prev(insts.end(), 1); std::advance(item, 1))
     {
+        (*item)->SetBBid(bb_id);
+        (*item)->SetBBid(bb_id);
         (*item)->SetPrev(*(std::prev(item, 1)));
         (*item)->SetNext(*(std::next(item, 1)));
     }
@@ -67,5 +72,26 @@ BasicBlock<bb_id, successors...>::BasicBlock(std::initializer_list<InstNode*> in
     id = bb_id;
     succs = std::vector{successors...};
 }
+
+template <uint32_t bb_id, uint32_t... successors>
+void BasicBlock<bb_id, successors...>::Dump()
+{
+    for (InstNode *item = first_inst; item != nullptr; item = item->GetNext())
+    {
+        item->Dump();
+    }
+}
+
+template <uint32_t bb_id, uint32_t... successors>
+void BasicBlock<bb_id, successors...>::Clear()
+{
+    for (InstNode *item = first_inst; item != nullptr;)
+    {   
+        InstNode *curr = item;
+        item = item->GetNext();
+        InstNode::InstDestroyer(curr);
+    }
+}
+
 
 #endif // BASIC_BLOCK_H

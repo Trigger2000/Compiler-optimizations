@@ -10,6 +10,17 @@ void Inst::throw_error(std::string msg, Opcode op_in) {
     #undef ERROR_INST
 }
 
+void Inst::PrintOpcode() {
+    std::cout << bb_id << ":" << id << " ";
+    #define PRINT_OPCODE(name, type)                                \
+    if (Opcode::name == op) {                                       \
+        std::cout << #name << " ";                                  \
+        return;                                                     \
+    }
+    OPCODE_LIST(PRINT_OPCODE)
+    #undef PRINT_OPCODE
+}
+
 void InstNode::InstDestroyer(InstNode *inst_node)
 {
     size_t node_offset = offsetof(Inst, inst_node);
@@ -27,6 +38,30 @@ void InstNode::InstDestroyer(InstNode *inst_node)
     #undef DESTROY_INST
 }
 
+void InstNode::Dump()
+{
+    size_t node_offset = offsetof(Inst, inst_node);
+
+    #define DUMP_INST(type)                                                             \
+    case Type::type:                                                                    \
+        reinterpret_cast<type*>(reinterpret_cast<void*>(this) - node_offset)->Dump();   \
+        return;
+
+    switch (GetType())
+    {
+        TYPE_LIST(DUMP_INST)
+    }
+
+    UNREACHABLE()
+}
+
+void InstNode::SetBBid(uint32_t bb_id)
+{
+    size_t node_offset = offsetof(Inst, inst_node);
+    size_t bd_id_offset = offsetof(Inst, bb_id);
+    *(reinterpret_cast<uint32_t*>(reinterpret_cast<void*>(this) - node_offset + bd_id_offset)) = bb_id;
+}
+
 // TODO change getters to macros codegen?
 
 uint32_t InstNode::GetId()
@@ -36,19 +71,19 @@ uint32_t InstNode::GetId()
     return *(reinterpret_cast<uint32_t*>(reinterpret_cast<void*>(this) - node_offset + id_offset));
 }
 
+uint32_t InstNode::GetBBId()
+{
+    size_t node_offset = offsetof(Inst, inst_node);
+    size_t bd_id_offset = offsetof(Inst, bb_id);
+    return *(reinterpret_cast<uint32_t*>(reinterpret_cast<void*>(this) - node_offset + bd_id_offset));
+}
+
 Opcode InstNode::GetOpcode()
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t opcode_offset = offsetof(Inst, op);
     return *(reinterpret_cast<Opcode*>(reinterpret_cast<void*>(this) - node_offset + opcode_offset));
 }
-
-// BasicBlock *InstNode::GetBasicBlock()
-// {
-//     size_t node_offset = offsetof(Inst, inst_node);
-//     size_t basic_block_offset = offsetof(Inst, bb);
-//     return *(reinterpret_cast<BasicBlock**>(reinterpret_cast<void*>(this) - node_offset + basic_block_offset));
-// }
 
 Type InstNode::GetType()
 {
