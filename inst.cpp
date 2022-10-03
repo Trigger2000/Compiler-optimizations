@@ -23,6 +23,7 @@ void Inst::PrintOpcode() {
 
 void InstNode::InstDestroyer(InstNode *inst_node)
 {
+    assert(inst_node != nullptr);
     size_t node_offset = offsetof(Inst, inst_node);
 
     #define DESTROY_INST(type)                                                              \

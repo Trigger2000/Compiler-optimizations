@@ -1,6 +1,7 @@
 #ifndef INST_H
 #define INST_H
 
+#include <cassert>
 #include <cstdint>
 #include <cstddef>
 #include <string>
