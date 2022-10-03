@@ -1,6 +1,8 @@
 #ifndef OPCODES_H
 #define OPCODES_H
 
+// TODO change types and opcodes according to needs. Ask about needs
+
 #define TYPE_LIST(FUNC)         \
     FUNC(InstBinOp)             \
     FUNC(InstBinOpImm)          \

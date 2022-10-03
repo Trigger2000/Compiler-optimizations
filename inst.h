@@ -7,17 +7,22 @@
 #include <utility>
 
 #include "opcode.h"
-#include "basic_block.h"
+// #include "basic_block.h"
 #include "utils.h"
+
+// class BasicBlock;
 
 class InstNode {
 public:
     template <typename...inputs>
     static InstNode *InstBuilder(const Opcode op_in, inputs...in_range);
 
+     // TODO variadic non-type template or variadic function?
+    static void InstDestroyer(InstNode *inst_node);
+
     uint32_t GetId();
     Opcode GetOpcode();
-    BasicBlock *GetBasicBlock();
+    // BasicBlock *GetBasicBlock();
     Type GetType();
 
     InstNode *GetNext()
@@ -28,6 +33,16 @@ public:
     InstNode *GetPrev()
     {
         return prev;
+    }
+
+    void SetNext(InstNode *next_in)
+    {
+        next = next_in;
+    }
+
+    void SetPrev(InstNode *prev_in)
+    {
+        prev = prev_in;
     }
 
     uint32_t GetDstReg();
@@ -63,13 +78,13 @@ private:
     uint32_t id = 0;
     Opcode op = Opcode::DEFAULT;
     Type type = Type::DEFAULT;
-    BasicBlock *bb = nullptr;
+    // BasicBlock *bb = nullptr;
 };
 
 
 class InstBinOp: public Inst {
 public:
-    template <typename ...inputs>
+    template <typename...inputs>
     static InstBinOp *CreateInst(uint32_t id, Opcode op, inputs... inps);
 
     uint32_t GetDstReg()
@@ -145,7 +160,7 @@ private:
 
     static const uint32_t INPUTS_COUNT = 1;
     uint32_t bb_id = 0;
-    BasicBlock *dst;
+    // BasicBlock *dst;
 };
 
 

@@ -10,6 +10,23 @@ void Inst::throw_error(std::string msg, Opcode op_in) {
     #undef ERROR_INST
 }
 
+void InstNode::InstDestroyer(InstNode *inst_node)
+{
+    size_t node_offset = offsetof(Inst, inst_node);
+
+    #define DESTROY_INST(type)                                                              \
+    case Type::type:                                                                        \
+        delete reinterpret_cast<type*>(reinterpret_cast<void*>(inst_node) - node_offset);   \
+        break;
+
+    switch (inst_node->GetType())
+    {
+        TYPE_LIST(DESTROY_INST)
+    }
+
+    #undef DESTROY_INST
+}
+
 // TODO change getters to macros codegen?
 
 uint32_t InstNode::GetId()
@@ -26,12 +43,12 @@ Opcode InstNode::GetOpcode()
     return *(reinterpret_cast<Opcode*>(reinterpret_cast<void*>(this) - node_offset + opcode_offset));
 }
 
-BasicBlock *InstNode::GetBasicBlock()
-{
-    size_t node_offset = offsetof(Inst, inst_node);
-    size_t basic_block_offset = offsetof(Inst, bb);
-    return *(reinterpret_cast<BasicBlock**>(reinterpret_cast<void*>(this) - node_offset + basic_block_offset));
-}
+// BasicBlock *InstNode::GetBasicBlock()
+// {
+//     size_t node_offset = offsetof(Inst, inst_node);
+//     size_t basic_block_offset = offsetof(Inst, bb);
+//     return *(reinterpret_cast<BasicBlock**>(reinterpret_cast<void*>(this) - node_offset + basic_block_offset));
+// }
 
 Type InstNode::GetType()
 {
