@@ -5,6 +5,7 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
+#include <unordered_map>
 
 #include "inst.h"
 
@@ -12,17 +13,17 @@ class BasicBlock
 {
   public:
     template <uint32_t bb_id, uint32_t... successors>
-    static BasicBlock* BasicBlockBuilder(std::initializer_list<InstNode*> insts);
+    static BasicBlock* BasicBlockBuilder(std::initializer_list<IListNode*> insts);
     static void BasicBlockDestroyer(BasicBlock* bb);
 
     void Dump();
 
-    InstNode* GetFirstinst() const
+    IListNode* GetFirstinst() const
     {
         return first_inst;
     }
 
-    InstNode* GetLastInst() const
+    IListNode* GetLastInst() const
     {
         return last_inst;
     }
@@ -32,30 +33,24 @@ class BasicBlock
         return id;
     }
 
-    const std::vector<uint32_t>& GetPreds()
+    const std::unordered_map<uint32_t, BasicBlock*>& GetPreds()
     {
         return preds;
     }
 
-    const std::vector<uint32_t>& GetSuccs()
+    const std::unordered_map<uint32_t, BasicBlock*>& GetSuccs()
     {
         return succs;
     }
 
-    // TODO clarify usage of rvalue refs
-    void SetPreds(std::vector<uint32_t>&& predecessors)
+    std::unordered_map<uint32_t, BasicBlock*>& GetPredsRef()
     {
-        preds = std::move(predecessors);
+        return preds;
     }
 
-    void SetPredsRef(std::vector<BasicBlock*>&& predecessors_ref)
+    std::unordered_map<uint32_t, BasicBlock*>& GetSuccsRef()
     {
-        preds_ref = std::move(predecessors_ref);
-    }
-
-    void SetSuccsRef(std::vector<BasicBlock*>&& successors_ref)
-    {
-        succs_ref = std::move(successors_ref);
+        return succs;
     }
 
   private:
@@ -63,21 +58,21 @@ class BasicBlock
     BasicBlock(BasicBlock& bb) = default;
 
     // These guys are binded in Graph constructor
-    std::vector<uint32_t> preds;
-    std::vector<BasicBlock*> preds_ref;
-    std::vector<uint32_t> succs;
-    std::vector<BasicBlock*> succs_ref;
+    std::unordered_map<uint32_t, BasicBlock*> preds;
+    std::unordered_map<uint32_t, BasicBlock*> succs;
 
-    InstNode* first_inst = nullptr;
-    InstNode* last_inst = nullptr;
-    InstNode* first_phi = nullptr;
+    IListNode* first_inst = nullptr;
+    IListNode* last_inst = nullptr;
+
+    // TODO currently not initialized
+    IListNode* first_phi = nullptr;
     // Graph *graph = nullptr;
 
     uint32_t id = 0;
 };
 
 template <uint32_t bb_id, uint32_t... successors>
-BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<InstNode*> insts)
+BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<IListNode*> insts)
 {
     // TODO Change, since empty bbs and bbs with 1 instruction exists!
     if (insts.size() < 2) {
@@ -88,6 +83,7 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<InstNode*> insts
     BasicBlock* result = new BasicBlock;
 
     // Bind instructions within basic block
+    result->id = bb_id;
     result->first_inst = *(insts.begin());
     result->last_inst = *(std::prev(insts.end(), 1));
     result->first_inst->SetNext(*(std::next(insts.begin(), 1)));
@@ -100,10 +96,13 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<InstNode*> insts
         (*item)->SetPrev(*(std::prev(item, 1)));
         (*item)->SetNext(*(std::next(item, 1)));
     }
-
-    result->id = bb_id;
+    
     if constexpr (sizeof...(successors) != 0) {
-        result->succs = std::vector{ successors... };
+        // TODO remove this vector?
+        std::vector<uint32_t> tmp_vector = std::vector{ successors... };
+        for (auto item: tmp_vector) {
+            result->succs[item] = nullptr;
+        }
     }
 
     return result;
@@ -112,10 +111,10 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<InstNode*> insts
 void BasicBlock::BasicBlockDestroyer(BasicBlock* bb)
 {
     assert(bb != nullptr);
-    for (InstNode* item = bb->GetFirstinst(); item != nullptr;) {
-        InstNode* curr = item;
+    for (IListNode* item = bb->GetFirstinst(); item != nullptr;) {
+        IListNode* curr = item;
         item = item->GetNext();
-        InstNode::InstDestroyer(curr);
+        IListNode::InstDestroyer(curr);
     }
 
     delete bb;
@@ -125,15 +124,15 @@ void BasicBlock::Dump()
 {
     std::cout << "bb id " << id << "\npreds [ ";
     for (auto item : preds) {
-        std::cout << item << " ";
+        std::cout << item.first << " ";
     }
     std::cout << "]\nsuccs [ ";
     for (auto item : succs) {
-        std::cout << item << " ";
+        std::cout << item.first << " ";
     }
     std::cout << "]\n";
 
-    for (InstNode* item = first_inst; item != nullptr; item = item->GetNext()) {
+    for (IListNode* item = first_inst; item != nullptr; item = item->GetNext()) {
         item->Dump();
     }
 }

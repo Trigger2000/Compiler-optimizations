@@ -9,7 +9,9 @@
     FUNC(InstControlJmp)                                                                                               \
     FUNC(InstControlRet)                                                                                               \
     FUNC(InstUtil)                                                                                                     \
-    FUNC(InstUtilImm)
+    FUNC(InstUtilImm)                                                                                                  \
+    FUNC(InstPhi)                                                                                                      \
+    FUNC(InstControlInput)
 
 #define OPCODE_LIST(FUNC)                                                                                              \
     /* Arithmetic */                                                                                                   \
@@ -25,11 +27,13 @@
     FUNC(JMP, InstControlJmp)                                                                                          \
     FUNC(JA, InstControlJmp)                                                                                           \
     FUNC(RET, InstControlRet)                                                                                          \
+    FUNC(INPUT, InstControlInput)                                                                                      \
     /* Utils */                                                                                                        \
     FUNC(MOV, InstUtil)                                                                                                \
     FUNC(MOVI, InstUtilImm)                                                                                            \
     FUNC(CMP, InstUtil)                                                                                                \
-    FUNC(U32TOU64, InstUtil)
+    FUNC(U32TOU64, InstUtil)                                                                                           \
+    FUNC(PHI, InstPhi)
 
 enum class Opcode
 {

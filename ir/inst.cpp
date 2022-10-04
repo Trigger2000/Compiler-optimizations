@@ -23,7 +23,7 @@ void Inst::PrintOpcode()
 #undef PRINT_OPCODE
 }
 
-void InstNode::InstDestroyer(InstNode* inst_node)
+void IListNode::InstDestroyer(IListNode* inst_node)
 {
     assert(inst_node != nullptr);
     size_t node_offset = offsetof(Inst, inst_node);
@@ -40,7 +40,7 @@ void InstNode::InstDestroyer(InstNode* inst_node)
 #undef DESTROY_INST
 }
 
-void InstNode::Dump()
+void IListNode::Dump()
 {
     size_t node_offset = offsetof(Inst, inst_node);
 
@@ -56,44 +56,44 @@ void InstNode::Dump()
     UNREACHABLE()
 }
 
-void InstNode::SetBBid(uint32_t bb_id)
+void IListNode::SetBBid(uint32_t bb_id)
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t bd_id_offset = offsetof(Inst, bb_id);
     *(static_cast<uint32_t*>(static_cast<void*>(this) - node_offset + bd_id_offset)) = bb_id;
 }
 
-// TODO change getters to macros codegen?
+// TODO change getters to macros codegen
 
-uint32_t InstNode::GetId()
+uint32_t IListNode::GetId()
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t id_offset = offsetof(Inst, id);
     return *(static_cast<uint32_t*>(static_cast<void*>(this) - node_offset + id_offset));
 }
 
-uint32_t InstNode::GetBBId()
+uint32_t IListNode::GetBBId()
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t bd_id_offset = offsetof(Inst, bb_id);
     return *(static_cast<uint32_t*>(static_cast<void*>(this) - node_offset + bd_id_offset));
 }
 
-Opcode InstNode::GetOpcode()
+Opcode IListNode::GetOpcode()
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t opcode_offset = offsetof(Inst, op);
     return *(static_cast<Opcode*>(static_cast<void*>(this) - node_offset + opcode_offset));
 }
 
-Type InstNode::GetType()
+Type IListNode::GetType()
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t type_offset = offsetof(Inst, type);
     return *(static_cast<Type*>(static_cast<void*>(this) - node_offset + type_offset));
 }
 
-uint32_t InstNode::GetDstReg()
+uint32_t IListNode::GetDstReg()
 {
     Type type = GetType();
     if (type != Type::InstBinOp && type != Type::InstBinOpImm) {
@@ -113,7 +113,7 @@ uint32_t InstNode::GetDstReg()
     return 0;
 }
 
-uint32_t InstNode::GetSrcReg1()
+uint32_t IListNode::GetSrcReg1()
 {
     Type type = GetType();
     if (type == Type::InstControlJmp || type == Type::InstControlRet) {
@@ -139,7 +139,7 @@ uint32_t InstNode::GetSrcReg1()
     return 0;
 }
 
-uint32_t InstNode::GetSrcReg2()
+uint32_t IListNode::GetSrcReg2()
 {
     Type type = GetType();
     if (type != Type::InstBinOp && type != Type::InstUtil) {
@@ -159,7 +159,7 @@ uint32_t InstNode::GetSrcReg2()
     return 0;
 }
 
-uint32_t InstNode::GetBbId()
+uint32_t IListNode::GetBbId()
 {
     Type type = GetType();
     if (type != Type::InstControlJmp) {
@@ -169,7 +169,7 @@ uint32_t InstNode::GetBbId()
     return static_cast<InstControlJmp*>(static_cast<void*>(this) - node_offset)->GetBbId();
 }
 
-uint32_t InstNode::GetRetValReg()
+uint32_t IListNode::GetRetValReg()
 {
     Type type = GetType();
     if (type != Type::InstControlRet) {
@@ -179,7 +179,7 @@ uint32_t InstNode::GetRetValReg()
     return static_cast<InstControlRet*>(static_cast<void*>(this) - node_offset)->GetRetValReg();
 }
 
-uint32_t InstNode::GetImm()
+uint32_t IListNode::GetImm()
 {
     Type type = GetType();
     if (type != Type::InstBinOpImm && type != Type::InstUtilImm) {
@@ -197,4 +197,24 @@ uint32_t InstNode::GetImm()
 
     UNREACHABLE()
     return 0;
+}
+
+const std::vector<PhiInput>& IListNode::GetPhiInputs()
+{
+    Type type = GetType();
+    if (type != Type::InstPhi) {
+        Inst::throw_error("No PhiInputs in ", GetOpcode());
+    }
+    size_t node_offset = offsetof(Inst, inst_node);
+    return static_cast<InstPhi*>(static_cast<void*>(this) - node_offset)->GetPhiInputs();
+}
+
+const std::vector<uint32_t>& IListNode::GetInputs()
+{
+    Type type = GetType();
+    if (type != Type::InstControlInput) {
+        Inst::throw_error("No Inputs in ", GetOpcode());
+    }
+    size_t node_offset = offsetof(Inst, inst_node);
+    return static_cast<InstControlInput*>(static_cast<void*>(this) - node_offset)->GetInputs();
 }
