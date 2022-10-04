@@ -30,7 +30,7 @@ void InstNode::InstDestroyer(InstNode* inst_node)
 
 #define DESTROY_INST(type)                                                                                             \
     case Type::type:                                                                                                   \
-        delete reinterpret_cast<type*>(reinterpret_cast<void*>(inst_node) - node_offset);                              \
+        delete static_cast<type*>(static_cast<void*>(inst_node) - node_offset);                              \
         break;
 
     switch (inst_node->GetType()) {
@@ -46,7 +46,7 @@ void InstNode::Dump()
 
 #define DUMP_INST(type)                                                                                                \
     case Type::type:                                                                                                   \
-        reinterpret_cast<type*>(reinterpret_cast<void*>(this) - node_offset)->Dump();                                  \
+        static_cast<type*>(static_cast<void*>(this) - node_offset)->Dump();                                  \
         return;
 
     switch (GetType()) {
@@ -60,7 +60,7 @@ void InstNode::SetBBid(uint32_t bb_id)
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t bd_id_offset = offsetof(Inst, bb_id);
-    *(reinterpret_cast<uint32_t*>(reinterpret_cast<void*>(this) - node_offset + bd_id_offset)) = bb_id;
+    *(static_cast<uint32_t*>(static_cast<void*>(this) - node_offset + bd_id_offset)) = bb_id;
 }
 
 // TODO change getters to macros codegen?
@@ -69,28 +69,28 @@ uint32_t InstNode::GetId()
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t id_offset = offsetof(Inst, id);
-    return *(reinterpret_cast<uint32_t*>(reinterpret_cast<void*>(this) - node_offset + id_offset));
+    return *(static_cast<uint32_t*>(static_cast<void*>(this) - node_offset + id_offset));
 }
 
 uint32_t InstNode::GetBBId()
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t bd_id_offset = offsetof(Inst, bb_id);
-    return *(reinterpret_cast<uint32_t*>(reinterpret_cast<void*>(this) - node_offset + bd_id_offset));
+    return *(static_cast<uint32_t*>(static_cast<void*>(this) - node_offset + bd_id_offset));
 }
 
 Opcode InstNode::GetOpcode()
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t opcode_offset = offsetof(Inst, op);
-    return *(reinterpret_cast<Opcode*>(reinterpret_cast<void*>(this) - node_offset + opcode_offset));
+    return *(static_cast<Opcode*>(static_cast<void*>(this) - node_offset + opcode_offset));
 }
 
 Type InstNode::GetType()
 {
     size_t node_offset = offsetof(Inst, inst_node);
     size_t type_offset = offsetof(Inst, type);
-    return *(reinterpret_cast<Type*>(reinterpret_cast<void*>(this) - node_offset + type_offset));
+    return *(static_cast<Type*>(static_cast<void*>(this) - node_offset + type_offset));
 }
 
 uint32_t InstNode::GetDstReg()
@@ -102,14 +102,15 @@ uint32_t InstNode::GetDstReg()
     size_t node_offset = offsetof(Inst, inst_node);
     switch (type) {
     case Type::InstBinOp:
-        return reinterpret_cast<InstBinOp*>(reinterpret_cast<void*>(this) - node_offset)->GetDstReg();
+        return static_cast<InstBinOp*>(static_cast<void*>(this) - node_offset)->GetDstReg();
         break;
     case Type::InstBinOpImm:
-        return reinterpret_cast<InstBinOpImm*>(reinterpret_cast<void*>(this) - node_offset)->GetDstReg();
+        return static_cast<InstBinOpImm*>(static_cast<void*>(this) - node_offset)->GetDstReg();
         break;
     }
 
     UNREACHABLE()
+    return 0;
 }
 
 uint32_t InstNode::GetSrcReg1()
@@ -121,20 +122,21 @@ uint32_t InstNode::GetSrcReg1()
     size_t node_offset = offsetof(Inst, inst_node);
     switch (type) {
     case Type::InstBinOp:
-        return reinterpret_cast<InstBinOp*>(reinterpret_cast<void*>(this) - node_offset)->GetSrcReg1();
+        return static_cast<InstBinOp*>(static_cast<void*>(this) - node_offset)->GetSrcReg1();
         break;
     case Type::InstBinOpImm:
-        return reinterpret_cast<InstBinOpImm*>(reinterpret_cast<void*>(this) - node_offset)->GetSrcReg1();
+        return static_cast<InstBinOpImm*>(static_cast<void*>(this) - node_offset)->GetSrcReg1();
         break;
     case Type::InstUtil:
-        return reinterpret_cast<InstUtil*>(reinterpret_cast<void*>(this) - node_offset)->GetSrcReg1();
+        return static_cast<InstUtil*>(static_cast<void*>(this) - node_offset)->GetSrcReg1();
         break;
     case Type::InstUtilImm:
-        return reinterpret_cast<InstUtilImm*>(reinterpret_cast<void*>(this) - node_offset)->GetSrcReg1();
+        return static_cast<InstUtilImm*>(static_cast<void*>(this) - node_offset)->GetSrcReg1();
         break;
     }
 
     UNREACHABLE()
+    return 0;
 }
 
 uint32_t InstNode::GetSrcReg2()
@@ -146,14 +148,15 @@ uint32_t InstNode::GetSrcReg2()
     size_t node_offset = offsetof(Inst, inst_node);
     switch (type) {
     case Type::InstBinOp:
-        return reinterpret_cast<InstBinOp*>(reinterpret_cast<void*>(this) - node_offset)->GetSrcReg2();
+        return static_cast<InstBinOp*>(static_cast<void*>(this) - node_offset)->GetSrcReg2();
         break;
     case Type::InstUtil:
-        return reinterpret_cast<InstUtil*>(reinterpret_cast<void*>(this) - node_offset)->GetSrcReg2();
+        return static_cast<InstUtil*>(static_cast<void*>(this) - node_offset)->GetSrcReg2();
         break;
     }
 
     UNREACHABLE()
+    return 0;
 }
 
 uint32_t InstNode::GetBbId()
@@ -163,7 +166,7 @@ uint32_t InstNode::GetBbId()
         Inst::throw_error("No BbId in ", GetOpcode());
     }
     size_t node_offset = offsetof(Inst, inst_node);
-    return reinterpret_cast<InstControlJmp*>(reinterpret_cast<void*>(this) - node_offset)->GetBbId();
+    return static_cast<InstControlJmp*>(static_cast<void*>(this) - node_offset)->GetBbId();
 }
 
 uint32_t InstNode::GetRetValReg()
@@ -173,7 +176,7 @@ uint32_t InstNode::GetRetValReg()
         Inst::throw_error("No RetValReg in ", GetOpcode());
     }
     size_t node_offset = offsetof(Inst, inst_node);
-    return reinterpret_cast<InstControlRet*>(reinterpret_cast<void*>(this) - node_offset)->GetRetValReg();
+    return static_cast<InstControlRet*>(static_cast<void*>(this) - node_offset)->GetRetValReg();
 }
 
 uint32_t InstNode::GetImm()
@@ -185,12 +188,13 @@ uint32_t InstNode::GetImm()
     size_t node_offset = offsetof(Inst, inst_node);
     switch (type) {
     case Type::InstBinOpImm:
-        return reinterpret_cast<InstBinOpImm*>(reinterpret_cast<void*>(this) - node_offset)->GetImm();
+        return static_cast<InstBinOpImm*>(static_cast<void*>(this) - node_offset)->GetImm();
         break;
     case Type::InstUtilImm:
-        return reinterpret_cast<InstUtilImm*>(reinterpret_cast<void*>(this) - node_offset)->GetImm();
+        return static_cast<InstUtilImm*>(static_cast<void*>(this) - node_offset)->GetImm();
         break;
     }
 
     UNREACHABLE()
+    return 0;
 }

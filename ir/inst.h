@@ -292,6 +292,7 @@ InstNode* InstNode::InstBuilder(const Opcode op_in, inputs... inputs_range)
 
     OPCODE_LIST(BUILD_INST)
 #undef BUILD_INST
+    return nullptr;
 }
 
 #define CREATE_INST(type)                                                                                              \
@@ -303,6 +304,7 @@ InstNode* InstNode::InstBuilder(const Opcode op_in, inputs... inputs_range)
         }                                                                                                              \
         throw_error("Invalid inputs to ", op);                                                                         \
         UNREACHABLE()                                                                                                  \
+        return nullptr;                                                                                                \
     }
 
 TYPE_LIST(CREATE_INST)

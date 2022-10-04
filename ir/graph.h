@@ -9,8 +9,7 @@ class Graph
 {
   public:
     Graph(std::initializer_list<BasicBlock*> bbs);
-
-    static void GraphDestroyer(Graph* graph);
+    ~Graph();
     void Dump();
 
   private:
@@ -56,10 +55,9 @@ Graph::Graph(std::initializer_list<BasicBlock*> bbs) : basic_blocks(bbs)
     }
 }
 
-void Graph::GraphDestroyer(Graph* graph)
+Graph::~Graph()
 {
-    assert(graph != nullptr);
-    for (auto item : graph->basic_blocks) {
+    for (auto item : basic_blocks) {
         BasicBlock::BasicBlockDestroyer(item);
     }
 }

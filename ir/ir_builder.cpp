@@ -28,6 +28,5 @@ int main()
     };
 
     g.Dump();
-    Graph::GraphDestroyer(&g);
     return 0;
 }
