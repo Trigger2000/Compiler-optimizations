@@ -1,16 +1,26 @@
 #ifndef GRAPH_H
 #define GRAPH_H
 
-#include <algorithm>
-
 #include "basic_block.h"
 
 class Graph
 {
   public:
+    // Create graph and bind basic blocks within it, also assign successors and predecessors
+    // TODO DFG build has not supported yet. Will be added here
     Graph(std::initializer_list<BasicBlock*> bbs);
     ~Graph();
     void Dump();
+
+    BasicBlock *GetBBbyId(uint32_t id)
+    {
+        // TODO introduce cache?
+        for (auto item: basic_blocks) {
+            if (item->GetId() == id)
+                return item;
+        }
+        return nullptr;
+    }
 
   private:
     std::vector<BasicBlock*> basic_blocks;
@@ -23,35 +33,21 @@ class Graph
 
 Graph::Graph(std::initializer_list<BasicBlock*> bbs) : basic_blocks(bbs)
 {
-    // Bind basic blocks within graph
-    // TODO Maybe not efficient? O(2 * N^2)
+    // TODO Maybe not efficient? O(N^2)
     for (auto curr_bb : basic_blocks) {
         uint32_t curr_id = curr_bb->GetId();
-        std::vector<uint32_t> predecessors;
-        std::vector<BasicBlock*> predecessors_ref;
-        std::vector<BasicBlock*> successors_ref;
-        const std::vector<uint32_t>& curr_successors = curr_bb->GetSuccs();
+        std::unordered_map<uint32_t, BasicBlock*>& curr_predecessors = curr_bb->GetPredsRef();
+        std::unordered_map<uint32_t, BasicBlock*>& curr_successors = curr_bb->GetSuccsRef();
 
         for (auto bb : basic_blocks) {
-            const std::vector<uint32_t>& succs = bb->GetSuccs();
-            if (std::find(succs.begin(), succs.end(), curr_id) != succs.end()) {
-                predecessors.push_back(bb->GetId());
-                predecessors_ref.push_back(bb);
+            const std::unordered_map<uint32_t, BasicBlock*>& succs = bb->GetSuccs();
+            if (succs.find(curr_id) != succs.end()) {
+                curr_predecessors[bb->GetId()] = bb;
+            }
+            if (curr_successors.find(bb->GetId()) != curr_successors.end()) {
+                curr_successors[bb->GetId()] = bb;
             }
         }
-
-        for (auto curr_succ : curr_successors) {
-            // TODO It's time for std::find and lambda?
-            for (auto bb : basic_blocks) {
-                if (bb->GetId() == curr_succ) {
-                    successors_ref.push_back(bb);
-                }
-            }
-        }
-
-        curr_bb->SetSuccsRef(std::move(successors_ref));
-        curr_bb->SetPredsRef(std::move(predecessors_ref));
-        curr_bb->SetPreds(std::move(predecessors));
     }
 }
 

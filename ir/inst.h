@@ -4,38 +4,50 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <initializer_list>
 #include <string>
 #include <utility>
+#include <vector>
 
 #include "opcode.h"
 #include "utils.h"
 
-class InstNode
+struct PhiInput;
+
+// Implements intrusive list for instructions and corresponding interface
+class IListNode
 {
   public:
-    template <uint32_t ins_id, typename... inputs>
-    static InstNode* InstBuilder(const Opcode op_in, inputs... in_range);
-    static void InstDestroyer(InstNode* inst_node);
+    // TODO remove it to private part?
+    IListNode() = default;
+    IListNode(IListNode& inst_node) = default;
 
-    InstNode* GetNext()
+    template <uint32_t ins_id, typename... inputs>
+    static IListNode* InstBuilder(const Opcode op_in, inputs... in_range);
+    static void InstDestroyer(IListNode* inst_node);
+
+    IListNode* GetNext()
     {
         return next_;
     }
 
-    InstNode* GetPrev()
+    IListNode* GetPrev()
     {
         return prev_;
     }
 
-    void SetNext(InstNode* next)
+    void SetNext(IListNode* next)
     {
         next_ = next;
     }
 
-    void SetPrev(InstNode* prev)
+    void SetPrev(IListNode* prev)
     {
         prev_ = prev;
     }
+
+
+    // each of below functions access fields and methods of corresponding classes by offsets
 
     void SetBBid(uint32_t bb_id);
     void Dump();
@@ -52,16 +64,15 @@ class InstNode
     uint32_t GetRetValReg();
     uint32_t GetImm();
 
+    const std::vector<PhiInput>& GetPhiInputs();
+    const std::vector<uint32_t>& GetInputs();
+
   private:
-    friend class Inst;
-
-    InstNode() = default;
-    InstNode(InstNode& inst_node) = default;
-
-    InstNode* next_ = nullptr;
-    InstNode* prev_ = nullptr;
+    IListNode* next_ = nullptr;
+    IListNode* prev_ = nullptr;
 };
 
+// base class for all instructions
 class Inst
 {
   protected:
@@ -75,9 +86,10 @@ class Inst
     static void throw_error(std::string msg, Opcode op_in);
 
   private:
-    friend class InstNode;
+    // to access inst_node field
+    friend class IListNode;
 
-    InstNode inst_node;
+    IListNode inst_node;
     uint32_t id = 0;
     uint32_t bb_id = 0;
     Opcode op = Opcode::DEFAULT;
@@ -87,7 +99,7 @@ class Inst
 class InstBinOp : public Inst
 {
   public:
-    template <typename... inputs>
+    template <bool is_dynamic_args = false, typename... inputs>
     static InstBinOp* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
     uint32_t GetDstReg()
@@ -117,6 +129,12 @@ class InstBinOp : public Inst
     {
     }
 
+    //  TODO temporary workaround
+    InstBinOp(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
+    {
+        UNREACHABLE();
+    }
+
     static const uint32_t INPUTS_COUNT = 3;
     uint32_t dst_reg = 0;
     uint32_t src_reg1 = 0;
@@ -126,7 +144,7 @@ class InstBinOp : public Inst
 class InstBinOpImm : public Inst
 {
   public:
-    template <typename... inputs>
+    template <bool is_dynamic_args = false, typename... inputs>
     static InstBinOpImm* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
     uint32_t GetDstReg()
@@ -156,6 +174,12 @@ class InstBinOpImm : public Inst
     {
     }
 
+    //  TODO temporary workaround
+    InstBinOpImm(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
+    {
+        UNREACHABLE()
+    }
+
     static const uint32_t INPUTS_COUNT = 3;
     uint32_t dst_reg = 0;
     uint32_t src_reg1 = 0;
@@ -165,7 +189,7 @@ class InstBinOpImm : public Inst
 class InstControlJmp : public Inst
 {
   public:
-    template <typename... inputs>
+    template <bool is_dynamic_args = false, typename... inputs>
     static InstControlJmp* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
     uint32_t GetBbId()
@@ -184,6 +208,12 @@ class InstControlJmp : public Inst
     {
     }
 
+    //  TODO temporary workaround
+    InstControlJmp(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
+    {
+        UNREACHABLE()
+    }
+
     static const uint32_t INPUTS_COUNT = 1;
     uint32_t bb_id = 0;
 };
@@ -191,7 +221,7 @@ class InstControlJmp : public Inst
 class InstControlRet : public Inst
 {
   public:
-    template <typename... inputs>
+    template <bool is_dynamic_args = false, typename... inputs>
     static InstControlRet* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
     uint32_t GetRetValReg()
@@ -210,6 +240,12 @@ class InstControlRet : public Inst
     {
     }
 
+    //  TODO temporary workaround
+    InstControlRet(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
+    {
+        UNREACHABLE()
+    }
+
     static const uint32_t INPUTS_COUNT = 1;
     uint32_t ret_val_reg = 0;
 };
@@ -217,7 +253,7 @@ class InstControlRet : public Inst
 class InstUtil : public Inst
 {
   public:
-    template <typename... inputs>
+    template <bool is_dynamic_args = false, typename... inputs>
     static InstUtil* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
     uint32_t GetSrcReg1()
@@ -242,6 +278,12 @@ class InstUtil : public Inst
     {
     }
 
+    //  TODO temporary workaround
+    InstUtil(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
+    {
+        UNREACHABLE()
+    }
+
     static const uint32_t INPUTS_COUNT = 2;
     uint32_t src_reg1 = 0;
     uint32_t src_reg2 = 0;
@@ -250,7 +292,7 @@ class InstUtil : public Inst
 class InstUtilImm : public Inst
 {
   public:
-    template <typename... inputs>
+    template <bool is_dynamic_args = false, typename... inputs>
     static InstUtilImm* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
     uint32_t GetSrcReg1()
@@ -275,14 +317,94 @@ class InstUtilImm : public Inst
     {
     }
 
+    //  TODO temporary workaround
+    InstUtilImm(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
+    {
+        UNREACHABLE()
+    }
+
     static const uint32_t INPUTS_COUNT = 2;
     uint32_t src_reg1 = 0;
     uint32_t imm = 0;
-    ;
+};
+
+struct PhiInput
+{
+    uint32_t inst_id = 0;
+    uint32_t bb_id;
+};
+
+class InstPhi : public Inst
+{
+  public:
+    template <bool is_dynamic_args = true, typename... inputs>
+    static InstPhi* CreateInst(uint32_t id, Opcode op, inputs... inps);
+
+    const std::vector<PhiInput>& GetPhiInputs()
+    {
+        return phi_inputs;
+    }
+
+    void Dump()
+    {
+        PrintOpcode();
+        std::cout << phi_output << " ";
+        for (auto item : phi_inputs) {
+            std::cout << "(" << item.inst_id << ", " << item.bb_id << ") ";
+        }
+        std::cout << "\n";
+    }
+
+  private:
+    InstPhi(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inputs) : Inst(id, op, type)
+    {
+        if (inputs.size() % 2 == 0) {
+            throw_error("Invalid inputs to ", op);
+        }
+        phi_output = *inputs.begin();
+        for (auto item = std::next(inputs.begin(), 1); item != inputs.end(); std::advance(item, 1)) {
+            phi_inputs.push_back({ *item, *std::next(item, 1) });
+            std::advance(item, 1);
+        }
+    }
+
+    static const uint32_t INPUTS_COUNT = 0; // variable inputs
+    std::vector<PhiInput> phi_inputs;
+    uint32_t phi_output = 0;
+};
+
+class InstControlInput : public Inst
+{
+  public:
+    template <bool is_dynamic_args = true, typename... inputs>
+    static InstControlInput* CreateInst(uint32_t id, Opcode op, inputs... inps);
+
+    const std::vector<uint32_t>& GetInputs()
+    {
+        return inputs_;
+    }
+
+    void Dump()
+    {
+        PrintOpcode();
+        for (auto item : inputs_) {
+            std::cout << item << " ";
+        }
+        std::cout << "\n";
+    }
+
+  private:
+    InstControlInput(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
+        : Inst(id, op, type), inputs_(inps)
+    {
+    }
+
+    static const uint32_t INPUTS_COUNT = 0; // variable inputs
+    std::vector<uint32_t> inputs_;
 };
 
 template <uint32_t ins_id, typename... inputs>
-InstNode* InstNode::InstBuilder(const Opcode op_in, inputs... inputs_range)
+IListNode* IListNode::InstBuilder(const Opcode op_in, inputs... inputs_range)
 {
 #define BUILD_INST(name, type)                                                                                         \
     if (Opcode::name == op_in) {                                                                                       \
@@ -295,16 +417,25 @@ InstNode* InstNode::InstBuilder(const Opcode op_in, inputs... inputs_range)
     return nullptr;
 }
 
+// TODO compile-time magic, rather hacky...
 #define CREATE_INST(type)                                                                                              \
-    template <typename... inputs>                                                                                      \
+    template <bool is_dynamic_args, typename... inputs>                                                                \
     type* type::CreateInst(uint32_t id, Opcode op, inputs... inps)                                                     \
     {                                                                                                                  \
-        if constexpr (sizeof...(inps) == type::INPUTS_COUNT) {                                                         \
-            return new type(id, op, Type::type, inps...);                                                              \
+        type* result = nullptr;                                                                                        \
+        /* this statement doesn't works as I want, so to each class constructor with   */                              \
+        /* std::initializer_list<uint32_t> should be added */                                                          \
+        if constexpr (is_dynamic_args) {                                                                               \
+            result = new type(id, op, Type::type, std::initializer_list<uint32_t>{ inps... });                         \
         }                                                                                                              \
-        throw_error("Invalid inputs to ", op);                                                                         \
-        UNREACHABLE()                                                                                                  \
-        return nullptr;                                                                                                \
+        if constexpr (is_dynamic_args == false) {                                                                      \
+            if constexpr (sizeof...(inps) == type::INPUTS_COUNT) {                                                     \
+                result = new type(id, op, Type::type, inps...);                                                        \
+            } else {                                                                                                   \
+                throw_error("Invalid inputs to ", op);                                                                 \
+            }                                                                                                          \
+        }                                                                                                              \
+        return result;                                                                                                 \
     }
 
 TYPE_LIST(CREATE_INST)
