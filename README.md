@@ -1,5 +1,12 @@
-# Compiler-optimizations
-MIPT educational project
+# Compiler-optimizations v2
+
+Major changes:  
+    - Instruction class redesign  
+    - Users and Inputs classes added, DFG build supported  
+    - RPO added, not tested  
+
+Minor changes:  
+    - Added plenty of getters and setters for all classes  
 
 # Build and launch test
 ```

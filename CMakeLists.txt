@@ -9,7 +9,7 @@ set(SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/ir/utils.cpp
 )
 
-add_compile_options(-std=c++1z -Wno-pointer-arith -g -Wno-narrowing)
+add_compile_options(-std=c++1z -Wno-return-type -g -Wno-narrowing)
 
 add_executable(ir_builder ${SOURCES})
 

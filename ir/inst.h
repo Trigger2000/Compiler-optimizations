@@ -39,8 +39,11 @@ class Inst
     ACCESSOR_MUTATOR_VIRTUAL(input2_, Input2, InstInput*)
     ACCESSOR_MUTATOR_VIRTUAL(target_inst_, TargetInst, JmpInput*)
     ACCESSOR_MUTATOR_VIRTUAL(constant_, Constant, uint32_t)
+    ACCESSOR_MUTATOR_VIRTUAL(phi_inputs_, PhiInputs, std::list<PhiInput*>&)
+    ACCESSOR_MUTATOR_VIRTUAL(users_, Users, InstUsers&)
 
     bool IsStartInst();
+    bool IsEndInst();
     virtual void Dump();
 
   protected:
@@ -80,10 +83,6 @@ class InstUsers
     }
 
     void Dump();
-
-  protected:
-    InstUsers() = default;
-    InstUsers(InstUsers&) = default;
 
   private:
     // maybe use custom one?
@@ -152,7 +151,7 @@ class PhiInput : public InstInput
     BasicBlock* input_bb_ = nullptr;
 };
 
-class InstWithTwoInputs : public Inst, public InstUsers
+class InstWithTwoInputs : public Inst
 {
   public:
     template <bool is_phi = false, typename... inputs>
@@ -160,6 +159,7 @@ class InstWithTwoInputs : public Inst, public InstUsers
 
     ACCESSOR_MUTATOR_OVERRIDE(input1_, Input1, InstInput*)
     ACCESSOR_MUTATOR_OVERRIDE(input2_, Input2, InstInput*)
+    ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
 
     void Dump() override;
 
@@ -185,15 +185,17 @@ class InstWithTwoInputs : public Inst, public InstUsers
     static const uint32_t INPUTS_COUNT = 2;
     InstInput* input1_ = nullptr;
     InstInput* input2_ = nullptr;
+    InstUsers users_;
 };
 
-class InstWithOneInput : public Inst, public InstUsers
+class InstWithOneInput : public Inst
 {
   public:
     template <bool is_phi = false, typename... inputs>
     static InstWithOneInput* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
     ACCESSOR_MUTATOR_OVERRIDE(input1_, Input1, InstInput*)
+    ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
 
     void Dump() override;
 
@@ -216,6 +218,7 @@ class InstWithOneInput : public Inst, public InstUsers
 
     static const uint32_t INPUTS_COUNT = 1;
     InstInput* input1_ = nullptr;
+    InstUsers users_;
 };
 
 class InstJmp : public Inst
@@ -249,31 +252,14 @@ class InstJmp : public Inst
     JmpInput* target_inst_ = nullptr;
 };
 
-class InstPhi : public Inst, public InstUsers
+class InstPhi : public Inst
 {
   public:
     template <bool is_phi = true, typename... inputs>
     static InstPhi* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
-    const std::list<PhiInput*>& GetPhiInputs() const
-    {
-        return phi_inputs_;
-    }
-
-    std::list<PhiInput*>& GetPhiInputs()
-    {
-        return phi_inputs_;
-    }
-
-    void AddPhiInput(PhiInput* input)
-    {
-        phi_inputs_.push_back(input);
-    }
-
-    void RemovePhiInput(PhiInput* input)
-    {
-        phi_inputs_.remove(input);
-    }
+    ACCESSOR_MUTATOR_OVERRIDE(phi_inputs_, PhiInputs, std::list<PhiInput*>&)
+    ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
 
     void Dump() override;
 
@@ -290,14 +276,17 @@ class InstPhi : public Inst, public InstUsers
 
     static const uint32_t INPUTS_COUNT = 0; // variable inputs
     std::list<PhiInput*> phi_inputs_;
+    InstUsers users_;
 };
 
-class InstParameter : public Inst, public InstUsers
+class InstParameter : public Inst
 {
   public:
     template <bool is_phi = false, typename... inputs>
     static InstParameter* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
+    ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
+    
     void Dump() override;
 
   private:
@@ -312,15 +301,17 @@ class InstParameter : public Inst, public InstUsers
     }
 
     static const uint32_t INPUTS_COUNT = 0;
+    InstUsers users_;
 };
 
-class InstConstant : public Inst, public InstUsers
+class InstConstant : public Inst
 {
   public:
     template <bool is_phi = false, typename... inputs>
     static InstConstant* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
     ACCESSOR_MUTATOR_OVERRIDE(constant_, Constant, uint32_t)
+    ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
 
     void Dump() override;
 
@@ -338,6 +329,7 @@ class InstConstant : public Inst, public InstUsers
     static const uint32_t INPUTS_COUNT = 1;
 
     uint32_t constant_ = 0;
+    InstUsers users_;
 };
 
 template <typename... inputs>

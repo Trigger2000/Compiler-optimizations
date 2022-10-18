@@ -40,7 +40,14 @@ void Inst::InstDestroyer(Inst* inst)
 
 bool Inst::IsStartInst()
 {
+    assert(bb_ != nullptr);
     return bb_->GetFirstInst() == this;
+}
+
+bool Inst::IsEndInst()
+{
+    assert(bb_ != nullptr);
+    return bb_->GetLastInst() == this;
 }
 
 void InstUsers::Dump()
@@ -54,7 +61,7 @@ void InstWithTwoInputs::Dump()
 {
     Inst::Dump();
     std::cout << input1_->GetInputId() << " " << input2_->GetInputId() << " -> ";
-    InstUsers::Dump();
+    users_.Dump();
     std::cout << "\n";
 }
 
@@ -62,7 +69,7 @@ void InstWithOneInput::Dump()
 {
     Inst::Dump();
     std::cout << input1_->GetInputId() << " -> ";
-    InstUsers::Dump();
+    users_.Dump();
     std::cout << "\n";
 }
 
@@ -79,7 +86,7 @@ void InstPhi::Dump()
         std::cout << "(" << item->GetInputId() << ", " << item->GetInputBBId() << ") ";
     }
     std::cout << "-> ";
-    InstUsers::Dump();
+    users_.Dump();
     std::cout << "\n";
 }
 
@@ -87,7 +94,7 @@ void InstParameter::Dump()
 {
     Inst::Dump();
     std::cout << "-> ";
-    InstUsers::Dump();
+    users_.Dump();
     std::cout << "\n";
 }
 
@@ -95,7 +102,7 @@ void InstConstant::Dump()
 {
     Inst::Dump();
     std::cout << constant_ << " -> ";
-    InstUsers::Dump();
+    users_.Dump();
     std::cout << "\n";
 }
 

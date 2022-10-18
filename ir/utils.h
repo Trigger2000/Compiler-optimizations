@@ -23,11 +23,14 @@
     virtual type Get##accessor_name()                                                                                  \
     {                                                                                                                  \
         UNREACHABLE()                                                                                                  \
-        return 0;                                                                                                      \
     }                                                                                                                  \
     virtual void Set##accessor_name(type accessor_name)                                                                \
     {                                                                                                                  \
         UNREACHABLE()                                                                                                  \
+    }                                                                                                                  \
+    virtual bool Has##accessor_name()                                                                                  \
+    {                                                                                                                  \
+        return false;                                                                                                  \
     }
 
 #define ACCESSOR_MUTATOR_OVERRIDE(field_name, accessor_name, type)                                                     \
@@ -38,6 +41,10 @@
     void Set##accessor_name(type accessor_name) override                                                               \
     {                                                                                                                  \
         field_name = accessor_name;                                                                                    \
+    }                                                                                                                  \
+    bool Has##accessor_name() override                                                                                 \
+    {                                                                                                                  \
+        return true;                                                                                                   \
     }
 
 void throw_inst_error(std::string msg, Opcode op_in);

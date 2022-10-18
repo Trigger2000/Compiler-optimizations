@@ -14,9 +14,60 @@ class Graph;
 class BasicBlock
 {
   public:
-    template <uint32_t... successors>
-    static BasicBlock* BasicBlockBuilder(uint32_t bb_id, std::initializer_list<Inst*> insts);
+    // TODO remove id from template parameters
+    template <uint32_t bb_id, uint32_t... successors>
+    static BasicBlock* BasicBlockBuilder(std::initializer_list<Inst*> insts);
     static void BasicBlockDestroyer(BasicBlock* bb);
+
+    void PushBackInst(Inst* inst)
+    {
+        assert(inst->GetPrev() == nullptr);
+        inst->SetPrev(last_inst_);
+        inst->SetBB(this);
+        last_inst_ = inst;
+    }
+
+    void PushFrontInst(Inst* inst)
+    {
+        assert(inst->GetNext() == nullptr);
+        inst->SetNext(inst);
+        inst->SetBB(this);
+        first_inst_ = inst;
+    }
+
+    // inserts inst before reference_inst
+    void InsertInst(Inst* reference_inst, Inst* inst)
+    {
+        assert(inst->GetPrev() == nullptr);
+        assert(inst->GetNext() == nullptr);
+        inst->SetPrev(reference_inst->GetPrev());
+        reference_inst->GetPrev()->SetNext(inst);
+        inst->SetNext(reference_inst);
+        reference_inst->SetPrev(inst);
+        inst->SetBB(this);
+    }
+
+    bool IsFirstBB()
+    {
+        assert(graph_ != nullptr);
+        return preds.size() == 0;
+    }
+
+    bool IsLastBB()
+    {
+        assert(graph_ != nullptr);
+        return succs.size() == 0;
+    }
+
+    Inst* GetInstById(uint32_t id)
+    {
+        for (auto item = first_inst_; item != nullptr; item = item->GetNext()) {
+            if (item->GetId() == id) {
+                return item;
+            } 
+        }
+        return nullptr;
+    }
 
     void Dump();
 
@@ -63,8 +114,8 @@ class BasicBlock
     uint32_t id_ = 0;
 };
 
-template <uint32_t... successors>
-BasicBlock* BasicBlock::BasicBlockBuilder(uint32_t bb_id, std::initializer_list<Inst*> insts)
+template <uint32_t bb_id, uint32_t... successors>
+BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<Inst*> insts)
 {
     BasicBlock* result = new BasicBlock;
 
@@ -85,6 +136,14 @@ BasicBlock* BasicBlock::BasicBlockBuilder(uint32_t bb_id, std::initializer_list<
         (*item)->SetBB(result);
         (*item)->SetPrev(*(std::prev(item, 1)));
         (*item)->SetNext(*(std::next(item, 1)));
+    }
+
+    // set first_phi_
+    for (auto item = insts.begin(); item < insts.end(); std::advance(item, 1)) {
+        if ((*item)->GetType() == Type::InstPhi) {
+            result->first_phi_ = *item;
+            break;
+        }
     }
     
     if constexpr (sizeof...(successors) != 0) {
