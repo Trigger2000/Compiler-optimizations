@@ -1,220 +1,106 @@
 #include "inst.h"
+#include "basic_block.h"
+// #include "basic_block.h"
 
-void Inst::throw_error(std::string msg, Opcode op_in)
+void Inst::Dump()
 {
-#define ERROR_INST(name, type)                                                                                         \
-    if (Opcode::name == op_in) {                                                                                       \
-        std::cerr << msg << #name << std::endl;                                                                        \
-        std::abort();                                                                                                  \
+    if (bb_ != nullptr) {
+        std::cout << bb_->GetId();
+    } else {
+        std::cout << "NO_BB";
     }
-    OPCODE_LIST(ERROR_INST)
-#undef ERROR_INST
-}
+    std::cout << ":" << id_ << " ";
 
-void Inst::PrintOpcode()
-{
-    std::cout << bb_id << ":" << id << " ";
 #define PRINT_OPCODE(name, type)                                                                                       \
-    if (Opcode::name == op) {                                                                                          \
+    case Opcode::name:                                                                                                 \
         std::cout << #name << " ";                                                                                     \
-        return;                                                                                                        \
+        return;
+
+    switch (opcode_) {
+        OPCODE_LIST(PRINT_OPCODE)
     }
-    OPCODE_LIST(PRINT_OPCODE)
 #undef PRINT_OPCODE
 }
 
-void IListNode::InstDestroyer(IListNode* inst_node)
+void Inst::InstDestroyer(Inst* inst)
 {
-    assert(inst_node != nullptr);
-    size_t node_offset = offsetof(Inst, inst_node);
+    assert(inst != nullptr);
 
 #define DESTROY_INST(type)                                                                                             \
     case Type::type:                                                                                                   \
-        delete static_cast<type*>(static_cast<void*>(inst_node) - node_offset);                              \
+        delete static_cast<type*>(inst);                                                                               \
         break;
 
-    switch (inst_node->GetType()) {
+    switch (inst->GetType()) {
         TYPE_LIST(DESTROY_INST)
     }
 
 #undef DESTROY_INST
 }
 
-void IListNode::Dump()
+bool Inst::IsStartInst()
 {
-    size_t node_offset = offsetof(Inst, inst_node);
-
-#define DUMP_INST(type)                                                                                                \
-    case Type::type:                                                                                                   \
-        static_cast<type*>(static_cast<void*>(this) - node_offset)->Dump();                                  \
-        return;
-
-    switch (GetType()) {
-        TYPE_LIST(DUMP_INST)
-    }
-
-    UNREACHABLE()
+    return bb_->GetFirstInst() == this;
 }
 
-void IListNode::SetBBid(uint32_t bb_id)
+void InstUsers::Dump()
 {
-    size_t node_offset = offsetof(Inst, inst_node);
-    size_t bd_id_offset = offsetof(Inst, bb_id);
-    *(static_cast<uint32_t*>(static_cast<void*>(this) - node_offset + bd_id_offset)) = bb_id;
+    for (auto item : users_) {
+        std::cout << item->GetId() << " ";
+    }
 }
 
-// TODO change getters to macros codegen
-
-uint32_t IListNode::GetId()
+void InstWithTwoInputs::Dump()
 {
-    size_t node_offset = offsetof(Inst, inst_node);
-    size_t id_offset = offsetof(Inst, id);
-    return *(static_cast<uint32_t*>(static_cast<void*>(this) - node_offset + id_offset));
+    Inst::Dump();
+    std::cout << input1_->GetInputId() << " " << input2_->GetInputId() << " -> ";
+    InstUsers::Dump();
+    std::cout << "\n";
 }
 
-uint32_t IListNode::GetBBId()
+void InstWithOneInput::Dump()
 {
-    size_t node_offset = offsetof(Inst, inst_node);
-    size_t bd_id_offset = offsetof(Inst, bb_id);
-    return *(static_cast<uint32_t*>(static_cast<void*>(this) - node_offset + bd_id_offset));
+    Inst::Dump();
+    std::cout << input1_->GetInputId() << " -> ";
+    InstUsers::Dump();
+    std::cout << "\n";
 }
 
-Opcode IListNode::GetOpcode()
+void InstJmp::Dump()
 {
-    size_t node_offset = offsetof(Inst, inst_node);
-    size_t opcode_offset = offsetof(Inst, op);
-    return *(static_cast<Opcode*>(static_cast<void*>(this) - node_offset + opcode_offset));
+    Inst::Dump();
+    std::cout << target_inst_->GetInputId() << "\n";
 }
 
-Type IListNode::GetType()
+void InstPhi::Dump()
 {
-    size_t node_offset = offsetof(Inst, inst_node);
-    size_t type_offset = offsetof(Inst, type);
-    return *(static_cast<Type*>(static_cast<void*>(this) - node_offset + type_offset));
+    Inst::Dump();
+    for (auto item : phi_inputs_) {
+        std::cout << "(" << item->GetInputId() << ", " << item->GetInputBBId() << ") ";
+    }
+    std::cout << "-> ";
+    InstUsers::Dump();
+    std::cout << "\n";
 }
 
-uint32_t IListNode::GetDstReg()
+void InstParameter::Dump()
 {
-    Type type = GetType();
-    if (type != Type::InstBinOp && type != Type::InstBinOpImm) {
-        Inst::throw_error("No DstReg in ", GetOpcode());
-    }
-    size_t node_offset = offsetof(Inst, inst_node);
-    switch (type) {
-    case Type::InstBinOp:
-        return static_cast<InstBinOp*>(static_cast<void*>(this) - node_offset)->GetDstReg();
-        break;
-    case Type::InstBinOpImm:
-        return static_cast<InstBinOpImm*>(static_cast<void*>(this) - node_offset)->GetDstReg();
-        break;
-    }
-
-    UNREACHABLE()
-    return 0;
+    Inst::Dump();
+    std::cout << "-> ";
+    InstUsers::Dump();
+    std::cout << "\n";
 }
 
-uint32_t IListNode::GetSrcReg1()
+void InstConstant::Dump()
 {
-    Type type = GetType();
-    if (type == Type::InstControlJmp || type == Type::InstControlRet) {
-        Inst::throw_error("No SrcReg1 in ", GetOpcode());
-    }
-    size_t node_offset = offsetof(Inst, inst_node);
-    switch (type) {
-    case Type::InstBinOp:
-        return static_cast<InstBinOp*>(static_cast<void*>(this) - node_offset)->GetSrcReg1();
-        break;
-    case Type::InstBinOpImm:
-        return static_cast<InstBinOpImm*>(static_cast<void*>(this) - node_offset)->GetSrcReg1();
-        break;
-    case Type::InstUtil:
-        return static_cast<InstUtil*>(static_cast<void*>(this) - node_offset)->GetSrcReg1();
-        break;
-    case Type::InstUtilImm:
-        return static_cast<InstUtilImm*>(static_cast<void*>(this) - node_offset)->GetSrcReg1();
-        break;
-    }
-
-    UNREACHABLE()
-    return 0;
+    Inst::Dump();
+    std::cout << constant_ << " -> ";
+    InstUsers::Dump();
+    std::cout << "\n";
 }
 
-uint32_t IListNode::GetSrcReg2()
+void PhiInput::SetInputBB(BasicBlock* input_bb)
 {
-    Type type = GetType();
-    if (type != Type::InstBinOp && type != Type::InstUtil) {
-        Inst::throw_error("No SrcReg2 in ", GetOpcode());
-    }
-    size_t node_offset = offsetof(Inst, inst_node);
-    switch (type) {
-    case Type::InstBinOp:
-        return static_cast<InstBinOp*>(static_cast<void*>(this) - node_offset)->GetSrcReg2();
-        break;
-    case Type::InstUtil:
-        return static_cast<InstUtil*>(static_cast<void*>(this) - node_offset)->GetSrcReg2();
-        break;
-    }
-
-    UNREACHABLE()
-    return 0;
-}
-
-uint32_t IListNode::GetBbId()
-{
-    Type type = GetType();
-    if (type != Type::InstControlJmp) {
-        Inst::throw_error("No BbId in ", GetOpcode());
-    }
-    size_t node_offset = offsetof(Inst, inst_node);
-    return static_cast<InstControlJmp*>(static_cast<void*>(this) - node_offset)->GetBbId();
-}
-
-uint32_t IListNode::GetRetValReg()
-{
-    Type type = GetType();
-    if (type != Type::InstControlRet) {
-        Inst::throw_error("No RetValReg in ", GetOpcode());
-    }
-    size_t node_offset = offsetof(Inst, inst_node);
-    return static_cast<InstControlRet*>(static_cast<void*>(this) - node_offset)->GetRetValReg();
-}
-
-uint32_t IListNode::GetImm()
-{
-    Type type = GetType();
-    if (type != Type::InstBinOpImm && type != Type::InstUtilImm) {
-        Inst::throw_error("No Imm in ", GetOpcode());
-    }
-    size_t node_offset = offsetof(Inst, inst_node);
-    switch (type) {
-    case Type::InstBinOpImm:
-        return static_cast<InstBinOpImm*>(static_cast<void*>(this) - node_offset)->GetImm();
-        break;
-    case Type::InstUtilImm:
-        return static_cast<InstUtilImm*>(static_cast<void*>(this) - node_offset)->GetImm();
-        break;
-    }
-
-    UNREACHABLE()
-    return 0;
-}
-
-const std::vector<PhiInput>& IListNode::GetPhiInputs()
-{
-    Type type = GetType();
-    if (type != Type::InstPhi) {
-        Inst::throw_error("No PhiInputs in ", GetOpcode());
-    }
-    size_t node_offset = offsetof(Inst, inst_node);
-    return static_cast<InstPhi*>(static_cast<void*>(this) - node_offset)->GetPhiInputs();
-}
-
-const std::vector<uint32_t>& IListNode::GetInputs()
-{
-    Type type = GetType();
-    if (type != Type::InstControlInput) {
-        Inst::throw_error("No Inputs in ", GetOpcode());
-    }
-    size_t node_offset = offsetof(Inst, inst_node);
-    return static_cast<InstControlInput*>(static_cast<void*>(this) - node_offset)->GetInputs();
+    assert(input_bb->GetId() == input_bb_id_);
+    input_bb_ = input_bb;
 }

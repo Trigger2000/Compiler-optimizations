@@ -9,46 +9,39 @@
 
 #include "inst.h"
 
+class Graph;
+
 class BasicBlock
 {
   public:
-    template <uint32_t bb_id, uint32_t... successors>
-    static BasicBlock* BasicBlockBuilder(std::initializer_list<IListNode*> insts);
+    template <uint32_t... successors>
+    static BasicBlock* BasicBlockBuilder(uint32_t bb_id, std::initializer_list<Inst*> insts);
     static void BasicBlockDestroyer(BasicBlock* bb);
 
     void Dump();
 
-    IListNode* GetFirstinst() const
-    {
-        return first_inst;
-    }
+    ACCESSOR_MUTATOR(first_inst_, FirstInst, Inst*)
+    ACCESSOR_MUTATOR(last_inst_, LastInst, Inst*)
+    ACCESSOR_MUTATOR(first_phi_, FirstPhi, Inst*)
+    ACCESSOR_MUTATOR(graph_, Graph, Graph*)
+    ACCESSOR_MUTATOR(id_, Id, uint32_t)
 
-    IListNode* GetLastInst() const
-    {
-        return last_inst;
-    }
-
-    uint32_t GetId() const
-    {
-        return id;
-    }
-
-    const std::unordered_map<uint32_t, BasicBlock*>& GetPreds()
+    const std::unordered_map<uint32_t, BasicBlock*>& GetPreds() const
     {
         return preds;
     }
 
-    const std::unordered_map<uint32_t, BasicBlock*>& GetSuccs()
+    const std::unordered_map<uint32_t, BasicBlock*>& GetSuccs() const
     {
         return succs;
     }
 
-    std::unordered_map<uint32_t, BasicBlock*>& GetPredsRef()
+    std::unordered_map<uint32_t, BasicBlock*>& GetPreds()
     {
         return preds;
     }
 
-    std::unordered_map<uint32_t, BasicBlock*>& GetSuccsRef()
+    std::unordered_map<uint32_t, BasicBlock*>& GetSuccs()
     {
         return succs;
     }
@@ -58,41 +51,38 @@ class BasicBlock
     BasicBlock(BasicBlock& bb) = default;
 
     // These guys are binded in Graph constructor
+    // TODO Remove uint32_t id and change to list/vector
     std::unordered_map<uint32_t, BasicBlock*> preds;
     std::unordered_map<uint32_t, BasicBlock*> succs;
 
-    IListNode* first_inst = nullptr;
-    IListNode* last_inst = nullptr;
+    Inst* first_inst_ = nullptr;
+    Inst* last_inst_ = nullptr;
+    Inst* first_phi_ = nullptr;
+    Graph* graph_ = nullptr;
 
-    // TODO currently not initialized
-    IListNode* first_phi = nullptr;
-    // Graph *graph = nullptr;
-
-    uint32_t id = 0;
+    uint32_t id_ = 0;
 };
 
-template <uint32_t bb_id, uint32_t... successors>
-BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<IListNode*> insts)
+template <uint32_t... successors>
+BasicBlock* BasicBlock::BasicBlockBuilder(uint32_t bb_id, std::initializer_list<Inst*> insts)
 {
-    // TODO Change, since empty bbs and bbs with 1 instruction exists!
-    if (insts.size() < 2) {
-        std::cerr << "invalid number of instructions in basic block" << std::endl;
-        std::abort();
-    }
-
     BasicBlock* result = new BasicBlock;
 
     // Bind instructions within basic block
-    result->id = bb_id;
-    result->first_inst = *(insts.begin());
-    result->last_inst = *(std::prev(insts.end(), 1));
-    result->first_inst->SetNext(*(std::next(insts.begin(), 1)));
-    result->last_inst->SetPrev(*(std::prev(insts.end(), 2)));
-    result->first_inst->SetBBid(bb_id);
-    result->last_inst->SetBBid(bb_id);
+    result->id_ = bb_id;
+    if (insts.size() > 0) {
+        result->first_inst_ = *(insts.begin());
+        result->last_inst_ = *(std::prev(insts.end(), 1));
+        result->first_inst_->SetBB(result);
+        result->last_inst_->SetBB(result);
+    }
+    if (insts.size() > 1) {
+        result->first_inst_->SetNext(*(std::next(insts.begin(), 1)));
+        result->last_inst_->SetPrev(*(std::prev(insts.end(), 2)));
+    }
     for (auto item = std::next(insts.begin(), 1); item < std::prev(insts.end(), 1); std::advance(item, 1)) {
-        (*item)->SetBBid(bb_id);
-        (*item)->SetBBid(bb_id);
+        (*item)->SetBB(result);
+        (*item)->SetBB(result);
         (*item)->SetPrev(*(std::prev(item, 1)));
         (*item)->SetNext(*(std::next(item, 1)));
     }
@@ -106,35 +96,6 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<IListNode*> inst
     }
 
     return result;
-}
-
-void BasicBlock::BasicBlockDestroyer(BasicBlock* bb)
-{
-    assert(bb != nullptr);
-    for (IListNode* item = bb->GetFirstinst(); item != nullptr;) {
-        IListNode* curr = item;
-        item = item->GetNext();
-        IListNode::InstDestroyer(curr);
-    }
-
-    delete bb;
-}
-
-void BasicBlock::Dump()
-{
-    std::cout << "bb id " << id << "\npreds [ ";
-    for (auto item : preds) {
-        std::cout << item.first << " ";
-    }
-    std::cout << "]\nsuccs [ ";
-    for (auto item : succs) {
-        std::cout << item.first << " ";
-    }
-    std::cout << "]\n";
-
-    for (IListNode* item = first_inst; item != nullptr; item = item->GetNext()) {
-        item->Dump();
-    }
 }
 
 #endif // BASIC_BLOCK_H

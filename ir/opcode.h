@@ -1,39 +1,31 @@
 #ifndef OPCODES_H
 #define OPCODES_H
 
-// TODO change types and opcodes according to needs. Ask about needs
-
 #define TYPE_LIST(FUNC)                                                                                                \
-    FUNC(InstBinOp)                                                                                                    \
-    FUNC(InstBinOpImm)                                                                                                 \
-    FUNC(InstControlJmp)                                                                                               \
-    FUNC(InstControlRet)                                                                                               \
-    FUNC(InstUtil)                                                                                                     \
-    FUNC(InstUtilImm)                                                                                                  \
+    FUNC(InstWithTwoInputs)                                                                                            \
+    FUNC(InstWithOneInput)                                                                                             \
+    FUNC(InstJmp)                                                                                                      \
     FUNC(InstPhi)                                                                                                      \
-    FUNC(InstControlInput)
+    FUNC(InstParameter)                                                                                                \
+    FUNC(InstConstant)
 
 #define OPCODE_LIST(FUNC)                                                                                              \
     /* Arithmetic */                                                                                                   \
-    FUNC(ADD, InstBinOp)                                                                                               \
-    FUNC(SUB, InstBinOp)                                                                                               \
-    FUNC(MUL, InstBinOp)                                                                                               \
-    FUNC(DIV, InstBinOp)                                                                                               \
-    FUNC(ADDI, InstBinOpImm)                                                                                           \
-    FUNC(SUBI, InstBinOpImm)                                                                                           \
-    FUNC(MULI, InstBinOpImm)                                                                                           \
-    FUNC(DIVI, InstBinOpImm)                                                                                           \
+    FUNC(ADD, InstWithTwoInputs)                                                                                       \
+    FUNC(SUB, InstWithTwoInputs)                                                                                       \
+    FUNC(MUL, InstWithTwoInputs)                                                                                       \
+    FUNC(DIV, InstWithTwoInputs)                                                                                       \
     /* Control */                                                                                                      \
-    FUNC(JMP, InstControlJmp)                                                                                          \
-    FUNC(JA, InstControlJmp)                                                                                           \
-    FUNC(RET, InstControlRet)                                                                                          \
-    FUNC(INPUT, InstControlInput)                                                                                      \
+    FUNC(JMP, InstJmp)                                                                                                 \
+    FUNC(JA, InstJmp)                                                                                                  \
+    FUNC(RET, InstWithOneInput)                                                                                        \
+    FUNC(PARAMETER, InstParameter)                                                                                     \
     /* Utils */                                                                                                        \
-    FUNC(MOV, InstUtil)                                                                                                \
-    FUNC(MOVI, InstUtilImm)                                                                                            \
-    FUNC(CMP, InstUtil)                                                                                                \
-    FUNC(U32TOU64, InstUtil)                                                                                           \
-    FUNC(PHI, InstPhi)
+    FUNC(MOV, InstWithOneInput)                                                                                        \
+    FUNC(CMP, InstWithTwoInputs) /* TODO This inst has no users*/                                                      \
+    FUNC(CAST, InstWithOneInput)                                                                                       \
+    FUNC(PHI, InstPhi)                                                                                                 \
+    FUNC(CONSTANT, InstConstant)
 
 enum class Opcode
 {

@@ -1,6 +1,6 @@
 #include "ir/graph.h"
 
-#define INST IListNode::InstBuilder
+#define INST Inst::InstBuilder
 #define BASIC_BLOCK BasicBlock::BasicBlockBuilder
 #define GRAPH Graph
 
@@ -28,10 +28,10 @@ void LectureTest() {
 
    Graph g = GRAPH{
         BASIC_BLOCK<1, 2>({
-            INST<1>(Opcode::INPUT, 0),
+            INST<1>(Opcode::PARAMETER, 0),
             INST<2>(Opcode::MOVI, 1, 1),
             INST<3>(Opcode::MOVI, 2, 2),
-            INST<4>(Opcode::U32TOU64, 3, 0)
+            INST<4>(Opcode::CAST, 3, 0)
         }),
         BASIC_BLOCK<2, 3, 4>({
             INST<1>(Opcode::PHI, 4, 2, 1, 7, 3),
@@ -82,10 +82,10 @@ void LectureTest() {
     assert(succs4.empty());
 
 
-    IListNode *bb1inst1 = bb1->GetFirstinst();
-    IListNode *bb1inst2 = bb1->GetFirstinst()->GetNext();
-    IListNode *bb1inst3 = bb1->GetLastInst()->GetPrev();
-    IListNode *bb1inst4 = bb1->GetLastInst();
+    Inst *bb1inst1 = bb1->GetFirstinst();
+    Inst *bb1inst2 = bb1->GetFirstinst()->GetNext();
+    Inst *bb1inst3 = bb1->GetLastInst()->GetPrev();
+    Inst *bb1inst4 = bb1->GetLastInst();
 
     assert(bb1inst1->GetId() == 1);
     assert(bb1inst2->GetId() == 2);
@@ -97,14 +97,14 @@ void LectureTest() {
     assert(bb1inst3->GetBBId() == 1);
     assert(bb1inst4->GetBBId() == 1);
 
-    assert(bb1inst1->GetOpcode() == Opcode::INPUT);
+    assert(bb1inst1->GetOpcode() == Opcode::PARAMETER);
     assert(bb1inst2->GetOpcode() == Opcode::MOVI);
     assert(bb1inst3->GetOpcode() == Opcode::MOVI);
-    assert(bb1inst4->GetOpcode() == Opcode::U32TOU64);
+    assert(bb1inst4->GetOpcode() == Opcode::CAST);
 
-    assert(bb1inst1->GetType() == Type::InstControlInput);
-    // assert(bb1inst2->GetType() == Type::InstBinOpImm);
-    // assert(bb1inst3->GetType() == Type::InstBinOpImm);
+    assert(bb1inst1->GetType() == Type::InstParameter);
+    // assert(bb1inst2->GetType() == Type::InstWithTwoInputsImm);
+    // assert(bb1inst3->GetType() == Type::InstWithTwoInputsImm);
     assert(bb1inst4->GetType() == Type::InstUtil);
 
     assert(bb1inst1->GetInputs()[0] == 0);
