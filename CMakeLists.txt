@@ -1,18 +1,19 @@
 cmake_minimum_required(VERSION 3.16)
 
-project(ir_builder)
+project(compiler_opts)
 
-set(SOURCES
-    ${CMAKE_CURRENT_SOURCE_DIR}/ir/ir_builder.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ir/inst.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ir/basic_block.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/ir/utils.cpp
-)
+set(CMAKE_CXX_STANDARD 17)
 
-add_compile_options(-std=c++1z -Wno-return-type -g -Wno-narrowing)
+add_subdirectory(third-party/googletest)
 
-add_executable(ir_builder ${SOURCES})
+add_compile_options(-Wno-return-type -g -Wno-narrowing)
 
-target_include_directories(ir_builder PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}
-)
+add_subdirectory(ir)
+add_subdirectory(optimizations)
+add_subdirectory(tests)
+
+add_executable(compiler_opts compiler_opts.cpp)
+
+target_include_directories(compiler_opts PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(compiler_opts ir)
+target_link_libraries(compiler_opts opts)

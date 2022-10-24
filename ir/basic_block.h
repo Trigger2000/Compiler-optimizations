@@ -6,6 +6,7 @@
 #include <iterator>
 #include <vector>
 #include <unordered_map>
+#include <set>
 
 #include "inst.h"
 
@@ -50,13 +51,13 @@ class BasicBlock
     bool IsFirstBB()
     {
         assert(graph_ != nullptr);
-        return preds.size() == 0;
+        return preds_.size() == 0;
     }
 
     bool IsLastBB()
     {
         assert(graph_ != nullptr);
-        return succs.size() == 0;
+        return succs_.size() == 0;
     }
 
     Inst* GetInstById(uint32_t id)
@@ -76,25 +77,42 @@ class BasicBlock
     ACCESSOR_MUTATOR(first_phi_, FirstPhi, Inst*)
     ACCESSOR_MUTATOR(graph_, Graph, Graph*)
     ACCESSOR_MUTATOR(id_, Id, uint32_t)
+    ACCESSOR_MUTATOR(dfs_marker_, DFSMarker, bool)
+    ACCESSOR_MUTATOR(dominators_, Dominators, const std::vector<BasicBlock*>&)
 
     const std::unordered_map<uint32_t, BasicBlock*>& GetPreds() const
     {
-        return preds;
+        return preds_;
     }
 
     const std::unordered_map<uint32_t, BasicBlock*>& GetSuccs() const
     {
-        return succs;
+        return succs_;
     }
 
-    std::unordered_map<uint32_t, BasicBlock*>& GetPreds()
+    void AddSucc(BasicBlock* bb)
     {
-        return preds;
+        succs_[bb->GetId()] = bb;
     }
 
-    std::unordered_map<uint32_t, BasicBlock*>& GetSuccs()
+    void AddPred(BasicBlock* bb)
     {
-        return succs;
+        preds_[bb->GetId()] = bb;
+    }
+
+    void RemoveSucc(BasicBlock* bb)
+    {
+        succs_.erase(bb->GetId());
+    }
+
+    void RemovePred(BasicBlock* bb)
+    {
+        preds_.erase(bb->GetId());
+    }
+
+    void AddDominator(BasicBlock* bb)
+    {
+        dominators_.push_back(bb);
     }
 
   private:
@@ -103,13 +121,17 @@ class BasicBlock
 
     // These guys are binded in Graph constructor
     // TODO Remove uint32_t id and change to list/vector
-    std::unordered_map<uint32_t, BasicBlock*> preds;
-    std::unordered_map<uint32_t, BasicBlock*> succs;
+    std::unordered_map<uint32_t, BasicBlock*> preds_;
+    std::unordered_map<uint32_t, BasicBlock*> succs_;
+
+    std::vector<BasicBlock*> dominators_;
 
     Inst* first_inst_ = nullptr;
     Inst* last_inst_ = nullptr;
     Inst* first_phi_ = nullptr;
     Graph* graph_ = nullptr;
+
+    bool dfs_marker_ = false;
 
     uint32_t id_ = 0;
 };
@@ -130,12 +152,13 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<Inst*> insts)
     if (insts.size() > 1) {
         result->first_inst_->SetNext(*(std::next(insts.begin(), 1)));
         result->last_inst_->SetPrev(*(std::prev(insts.end(), 2)));
-    }
-    for (auto item = std::next(insts.begin(), 1); item < std::prev(insts.end(), 1); std::advance(item, 1)) {
-        (*item)->SetBB(result);
-        (*item)->SetBB(result);
-        (*item)->SetPrev(*(std::prev(item, 1)));
-        (*item)->SetNext(*(std::next(item, 1)));
+
+        for (auto item = std::next(insts.begin(), 1); item < std::prev(insts.end(), 1); std::advance(item, 1)) {
+            (*item)->SetBB(result);
+            (*item)->SetBB(result);
+            (*item)->SetPrev(*(std::prev(item, 1)));
+            (*item)->SetNext(*(std::next(item, 1)));
+        }
     }
 
     // set first_phi_
@@ -150,7 +173,7 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<Inst*> insts)
         // TODO remove this vector?
         std::vector<uint32_t> tmp_vector = std::vector{ successors... };
         for (auto item: tmp_vector) {
-            result->succs[item] = nullptr;
+            result->succs_[item] = nullptr;
         }
     }
 

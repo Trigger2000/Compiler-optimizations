@@ -1,6 +1,7 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <algorithm>
 #include <iostream>
 
 #define UNREACHABLE()                                                                                                  \
@@ -22,11 +23,11 @@
 #define ACCESSOR_MUTATOR_VIRTUAL(field_name, accessor_name, type)                                                      \
     virtual type Get##accessor_name()                                                                                  \
     {                                                                                                                  \
-        UNREACHABLE()                                                                                                  \
+        throw_error("No field named ##field_name");                                                                    \
     }                                                                                                                  \
     virtual void Set##accessor_name(type accessor_name)                                                                \
     {                                                                                                                  \
-        UNREACHABLE()                                                                                                  \
+        throw_error("No field named ##field_name");                                                                    \
     }                                                                                                                  \
     virtual bool Has##accessor_name()                                                                                  \
     {                                                                                                                  \
@@ -47,6 +48,22 @@
         return true;                                                                                                   \
     }
 
-void throw_inst_error(std::string msg, Opcode op_in);
+void throw_inst_error(const std::string& msg, Opcode op_in);
+void throw_error(const std::string& msg);
+
+// Subtraction of two vectors: result = first - second
+template <typename T>
+std::vector<T> ComputeVectorsDiff(const std::vector<T>& first, const std::vector<T>& second)
+{
+    // this function can be implemented using std::set_difference with O(n*logn) complexity
+    std::vector<T> result;
+    for (auto item_first: first) {
+        if (std::find(second.begin(), second.end(), item_first) == second.end()) {
+            result.push_back(item_first);
+        }
+    }
+
+    return result;
+}
 
 #endif // UTILS_H

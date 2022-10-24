@@ -1,7 +1,7 @@
 #include "opcode.h"
 #include "utils.h"
 
-void throw_inst_error(std::string msg, Opcode op_in)
+void throw_inst_error(const std::string& msg, Opcode op_in)
 {
 #define ERROR_INST(name, type)                                                                                         \
     if (Opcode::name == op_in) {                                                                                       \
@@ -10,4 +10,10 @@ void throw_inst_error(std::string msg, Opcode op_in)
     }
     OPCODE_LIST(ERROR_INST)
 #undef ERROR_INST
+}
+
+void throw_error(const std::string& msg)
+{
+    std::cerr << msg << std::endl;
+    std::abort();
 }

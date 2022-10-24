@@ -35,6 +35,7 @@ class Inst
     ACCESSOR_MUTATOR(opcode_, Opcode, Opcode)
     ACCESSOR_MUTATOR(type_, Type, Type)
 
+    // TODO change to CRTP
     ACCESSOR_MUTATOR_VIRTUAL(input1_, Input1, InstInput*)
     ACCESSOR_MUTATOR_VIRTUAL(input2_, Input2, InstInput*)
     ACCESSOR_MUTATOR_VIRTUAL(target_inst_, TargetInst, JmpInput*)
@@ -99,6 +100,7 @@ class InstInput
 
     ACCESSOR_MUTATOR(input_id_, InputId, uint32_t)
 
+    // TODO change to CRTP
     virtual void SetInputInst(Inst* input_inst)
     {
         assert(input_inst->GetId() == input_id_);

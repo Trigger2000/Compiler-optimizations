@@ -15,12 +15,16 @@ void BasicBlock::BasicBlockDestroyer(BasicBlock* bb)
 void BasicBlock::Dump()
 {
     std::cout << "bb id " << id_ << "\npreds [ ";
-    for (auto item : preds) {
-        std::cout << item.first << " ";
+    for (auto pred : preds_) {
+        std::cout << pred.first << " ";
     }
     std::cout << "]\nsuccs [ ";
-    for (auto item : succs) {
-        std::cout << item.first << " ";
+    for (auto succ : succs_) {
+        std::cout << succ.first << " ";
+    }
+    std::cout << "]\ndominators [ ";
+    for (auto dom : dominators_) {
+        std::cout << dom->GetId() << " ";
     }
     std::cout << "]\n";
 
