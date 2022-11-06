@@ -7,10 +7,10 @@ Graph::Graph(std::initializer_list<BasicBlock*> bbs) : basic_blocks_(bbs)
     // TODO Maybe not efficient? O(N^2), N - number of bbs
     for (auto curr_bb : basic_blocks_) {
         for (auto bb : basic_blocks_) {
-            if (bb->GetSuccs().find(curr_bb->GetId()) != bb->GetSuccs().end()) {
+            if (bb->HasSucc(curr_bb)) {
                 curr_bb->AddPred(bb);
             }
-            if (curr_bb->GetSuccs().find(bb->GetId()) != curr_bb->GetSuccs().end()) {
+            if (curr_bb->HasSucc(bb)) {
                 curr_bb->AddSucc(bb);
             }
         }
@@ -49,63 +49,6 @@ void Graph::BuildDFG()
                 }
             }
         }
-    }
-}
-
-void POVisitor(std::vector<BasicBlock*>& result, BasicBlock* current)
-{
-    if (current->GetDFSMarker() == true) {
-        return;
-    }
-    current->SetDFSMarker(true);
-    for (auto item: current->GetSuccs()) {
-        POVisitor(result, item.second);
-    }
-    result.push_back(current);
-}
-
-std::vector<BasicBlock*> Graph::GetRPO()
-{
-    std::vector<BasicBlock*> result;
-    assert(basic_blocks_.size() > 0);
-
-    basic_blocks_[0]->SetDFSMarker(true);
-    for (auto item: basic_blocks_[0]->GetSuccs()) {
-        POVisitor(result, item.second);
-    }
-    result.push_back(basic_blocks_[0]);
-    std::reverse(result.begin(), result.end());
-
-    for (auto bb: basic_blocks_) {
-        bb->SetDFSMarker(false);
-    }
-
-    return result;
-}
-
-void Graph::BuildDominatorTreeSlow()
-{
-    assert(basic_blocks_.size() > 0);
-    // DFS order actually doesn't matter, let it be, for example, RPO
-    std::vector<BasicBlock*> init_reach = GetRPO();
-
-    BasicBlock *root = basic_blocks_[0];
-    root->AddDominator(root);
-
-    for (auto bb = std::next(basic_blocks_.begin(), 1); bb != basic_blocks_.end(); std::advance(bb, 1)) {
-        (*bb)->AddDominator(root);
-
-        UnbindBasicBlock(*bb);
-        
-        // DFS order actually doesn't matter, let it be, for example, RPO
-        std::vector<BasicBlock*> reach_curr = GetRPO();
-        std::vector<BasicBlock*> reach_diff = ComputeVectorsDiff(init_reach, reach_curr);
-        
-        for (auto bb_diff: reach_diff) {
-            bb_diff->AddDominator(*bb);
-        }
-
-        BindBasicBlock(*bb);
     }
 }
 

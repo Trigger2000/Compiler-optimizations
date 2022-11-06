@@ -9,10 +9,10 @@ Creation of all instructions is implemented via static method `Inst::InstBuilder
 Several instructions, passed to `BasicBlock::BasicBlockBuilder(insts...)`, bind together and form basic block. This file contains BasicBlock class that holds pointer to head and tail of linked list of instructions. Also each basic block contains all it's predecessors and successors.
 
 ### graph.h
-Contains `Graph` class, which holds several basic blocks. Passing arguments to `Graph`'s constructor, binds basic block with each other and assigns predecessors and successors for each basic block. Also `Graph` constructs DFG using `BuildDFG` method, resolving ids inputs to references and assigning users. building dominator's tree is implemented by `BuildDominatorTreeSlow` method
+Contains `Graph` class, which holds several basic blocks. Passing arguments to `Graph`'s constructor, binds basic block with each other and assigns predecessors and successors for each basic block. Also `Graph` constructs DFG using `BuildDFG` method, resolving ids inputs to references and assigning users.
 
 ### Usage
-```
+```a
 GRAPH{
     BASIC_BLOCK<id, successors>({
         INST(id, OPCODE, inputs...),

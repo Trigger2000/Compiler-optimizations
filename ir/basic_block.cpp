@@ -16,11 +16,11 @@ void BasicBlock::Dump()
 {
     std::cout << "bb id " << id_ << "\npreds [ ";
     for (auto pred : preds_) {
-        std::cout << pred.first << " ";
+        std::cout << pred->GetId() << " ";
     }
     std::cout << "]\nsuccs [ ";
     for (auto succ : succs_) {
-        std::cout << succ.first << " ";
+        std::cout << std::get<BasicBlock*>(succ)->GetId() << " ";
     }
     std::cout << "]\ndominators [ ";
     for (auto dom : dominators_) {

@@ -5,14 +5,15 @@
 #include <iostream>
 #include <iterator>
 #include <vector>
-#include <unordered_map>
+#include <variant>
 #include <set>
 
 #include "inst.h"
+#include "marker.h"
 
 class Graph;
 
-class BasicBlock
+class BasicBlock : public Markers
 {
   public:
     // TODO remove id from template parameters
@@ -77,37 +78,62 @@ class BasicBlock
     ACCESSOR_MUTATOR(first_phi_, FirstPhi, Inst*)
     ACCESSOR_MUTATOR(graph_, Graph, Graph*)
     ACCESSOR_MUTATOR(id_, Id, uint32_t)
-    ACCESSOR_MUTATOR(dfs_marker_, DFSMarker, bool)
     ACCESSOR_MUTATOR(dominators_, Dominators, const std::vector<BasicBlock*>&)
+    ACCESSOR_MUTATOR(idom_, IDom, BasicBlock*)
 
-    const std::unordered_map<uint32_t, BasicBlock*>& GetPreds() const
+    const std::vector<BasicBlock*>& GetPreds() const
     {
         return preds_;
     }
 
-    const std::unordered_map<uint32_t, BasicBlock*>& GetSuccs() const
+    const std::vector<std::variant<uint32_t, BasicBlock*>>& GetSuccs() const
     {
         return succs_;
     }
 
     void AddSucc(BasicBlock* bb)
     {
-        succs_[bb->GetId()] = bb;
+        for (auto& succ: succs_) {
+            if (std::holds_alternative<uint32_t>(succ) && std::get<uint32_t>(succ) == bb->GetId()) {
+                succ = bb;
+                return;
+            }
+        }
+        succs_.push_back(bb);
+    }
+
+    bool HasSucc(BasicBlock* bb)
+    {
+        for (auto& succ: succs_) {
+            if ((std::holds_alternative<BasicBlock*>(succ) && std::get<BasicBlock*>(succ) == bb) ||
+                (std::holds_alternative<uint32_t>(succ) && std::get<uint32_t>(succ) == bb->GetId())) {
+                return true;
+            }
+        }
+        return false;
     }
 
     void AddPred(BasicBlock* bb)
     {
-        preds_[bb->GetId()] = bb;
+        preds_.push_back(bb);
     }
 
     void RemoveSucc(BasicBlock* bb)
     {
-        succs_.erase(bb->GetId());
+        size_t pos = 0;
+        for (auto succ: succs_) {
+            if ((std::holds_alternative<BasicBlock*>(succ) && std::get<BasicBlock*>(succ) == bb) ||
+                (std::holds_alternative<uint32_t>(succ) && std::get<uint32_t>(succ) == bb->GetId())) {
+                succs_.erase(succs_.begin() + pos);
+                return;
+            }
+            pos++;
+        }
     }
 
     void RemovePred(BasicBlock* bb)
     {
-        preds_.erase(bb->GetId());
+        preds_.erase(std::find(preds_.begin(), preds_.end(), bb));
     }
 
     void AddDominator(BasicBlock* bb)
@@ -119,19 +145,17 @@ class BasicBlock
     BasicBlock() = default;
     BasicBlock(BasicBlock& bb) = default;
 
-    // These guys are binded in Graph constructor
-    // TODO Remove uint32_t id and change to list/vector
-    std::unordered_map<uint32_t, BasicBlock*> preds_;
-    std::unordered_map<uint32_t, BasicBlock*> succs_;
+    std::vector<BasicBlock*> preds_;
+    std::vector<std::variant<uint32_t, BasicBlock*>> succs_;
 
+    // TODO remove this
     std::vector<BasicBlock*> dominators_;
+    BasicBlock* idom_ = nullptr;
 
     Inst* first_inst_ = nullptr;
     Inst* last_inst_ = nullptr;
     Inst* first_phi_ = nullptr;
     Graph* graph_ = nullptr;
-
-    bool dfs_marker_ = false;
 
     uint32_t id_ = 0;
 };
@@ -170,10 +194,11 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<Inst*> insts)
     }
     
     if constexpr (sizeof...(successors) != 0) {
+        // static_assert(sizeof...(successors) <= 2);
         // TODO remove this vector?
         std::vector<uint32_t> tmp_vector = std::vector{ successors... };
-        for (auto item: tmp_vector) {
-            result->succs_[item] = nullptr;
+        for (auto succ_num: tmp_vector) {
+            result->succs_.push_back(succ_num);
         }
     }
 
