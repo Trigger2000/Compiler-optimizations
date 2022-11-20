@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 
 add_subdirectory(third-party/googletest)
 
-add_compile_options(-Wno-return-type -g -Wno-narrowing)
+add_compile_options(-Wno-return-type -g -O0 -Wno-narrowing)
 
 add_subdirectory(ir)
 add_subdirectory(pass)

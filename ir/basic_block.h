@@ -6,12 +6,12 @@
 #include <iterator>
 #include <vector>
 #include <variant>
-#include <set>
 
 #include "inst.h"
 #include "marker.h"
 
 class Graph;
+class Loop;
 
 class BasicBlock : public Markers
 {
@@ -80,6 +80,7 @@ class BasicBlock : public Markers
     ACCESSOR_MUTATOR(id_, Id, uint32_t)
     ACCESSOR_MUTATOR(dominators_, Dominators, const std::vector<BasicBlock*>&)
     ACCESSOR_MUTATOR(idom_, IDom, BasicBlock*)
+    ACCESSOR_MUTATOR(loop_, Loop, Loop*)
 
     const std::vector<BasicBlock*>& GetPreds() const
     {
@@ -156,6 +157,7 @@ class BasicBlock : public Markers
     Inst* last_inst_ = nullptr;
     Inst* first_phi_ = nullptr;
     Graph* graph_ = nullptr;
+    Loop* loop_ = nullptr;
 
     uint32_t id_ = 0;
 };

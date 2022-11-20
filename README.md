@@ -1,9 +1,8 @@
-# Compiler-optimizations v3
+# Compiler-optimizations v4
 
 Major changes:  
-    - Added slow algorithm for building dominator's tree with tests
-    - Added fast algorithm for building dominator's tree with tests
-    - Introduced PassManager class and all passes are implemented as classes 
+    - Added loop analyzer with tests  
+    - Introduced Marker and MarkerManager classes
 
 # Build and launch test
 ```

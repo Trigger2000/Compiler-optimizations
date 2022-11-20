@@ -69,6 +69,18 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_ARTICLE) {
 
 // test case 1 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_1) {
+    /*
+                0
+                |
+                v
+            |---1---|
+            |       |
+            v       v
+            2   4<--5
+            |   |   |
+            |   v   v
+            |-->3<--6
+    */
     Graph g = GRAPH{
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 5>({}),
@@ -93,6 +105,27 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_1) {
 
 // test case 2 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_2) {
+    /*
+                0
+                |
+                v
+           |--->1----|
+           |    |    |
+           |    V    v
+           | |->2<---9
+           | |  |  
+           | |  V  
+           | ---3
+           |    |
+           |    v
+           |    4<---|
+           |    |    |
+           |    v    |
+           |    5----|
+           |    |
+           |    v
+           7<---6--->8--->10
+    */
     Graph g = GRAPH{
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 9>({}),
@@ -153,6 +186,18 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_3) {
 
 // test case 1 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_1) {
+    /*
+                0
+                |
+                v
+            |---1---|
+            |       |
+            v       v
+            2   4<--5
+            |   |   |
+            |   v   v
+            |-->3<--6
+    */
     Graph g = GRAPH{
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 5>({}),
@@ -177,6 +222,27 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_1) {
 
 // test case 2 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_2) {
+    /*
+                0
+                |
+                v
+           |--->1----|
+           |    |    |
+           |    V    v
+           | |->2<---9
+           | |  |  
+           | |  V  
+           | ---3
+           |    |
+           |    v
+           |    4<---|
+           |    |    |
+           |    v    |
+           |    5----|
+           |    |
+           |    v
+           7<---6--->8--->10
+    */
     Graph g = GRAPH{
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 9>({}),
