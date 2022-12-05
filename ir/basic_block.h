@@ -19,6 +19,8 @@ class BasicBlock : public Markers
     // TODO remove id from template parameters
     template <uint32_t bb_id, uint32_t... successors>
     static BasicBlock* BasicBlockBuilder(std::initializer_list<Inst*> insts);
+    static BasicBlock* BasicBlockBuilder();
+    
     static void BasicBlockDestroyer(BasicBlock* bb);
 
     void PushBackInst(Inst* inst)
@@ -160,6 +162,8 @@ class BasicBlock : public Markers
     Loop* loop_ = nullptr;
 
     uint32_t id_ = 0;
+
+    static inline uint32_t last_assigned_id_ = 0;
 };
 
 template <uint32_t bb_id, uint32_t... successors>
@@ -169,6 +173,7 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<Inst*> insts)
 
     // Bind instructions within basic block
     result->id_ = bb_id;
+    last_assigned_id_ = bb_id;
     if (insts.size() > 0) {
         result->first_inst_ = *(insts.begin());
         result->last_inst_ = *(std::prev(insts.end(), 1));

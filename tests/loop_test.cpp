@@ -6,12 +6,17 @@
 #define BASIC_BLOCK BasicBlock::BasicBlockBuilder
 #define GRAPH Graph
 
-void CheckLoopBlocks(Loop* loop, std::vector<uint32_t> expected_block_ids)
+void CheckLoopBlocks(Loop* loop, std::vector<uint32_t> expected_block_ids, bool is_root_loop)
 {
     auto loop_blocks = loop->GetBlocks();
     auto comparator = [](BasicBlock* rhs, BasicBlock* lhs) { return rhs->GetId() < lhs->GetId(); };
     std::sort(loop_blocks.begin(), loop_blocks.end(), comparator);
-    ASSERT_EQ(loop->GetBlocks().size(), expected_block_ids.size());
+    // for non root loops pre-headers are injected
+    if (!is_root_loop) {
+        ASSERT_EQ(loop->GetBlocks().size(), expected_block_ids.size() + 1);
+    } else {
+        ASSERT_EQ(loop->GetBlocks().size(), expected_block_ids.size());
+    }
     for (uint32_t i = 0; i < expected_block_ids.size(); ++i) {
         ASSERT_EQ(loop_blocks[i]->GetId(), expected_block_ids[i]);
     }
@@ -45,7 +50,7 @@ TEST(LOOP_TEST, LOOP_TEST_1) {
     Loop* root_loop = g.GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 0);
-    CheckLoopBlocks(root_loop, {0, 1, 2, 3, 4, 5, 6});
+    CheckLoopBlocks(root_loop, {0, 1, 2, 3, 4, 5, 6}, true);
 }
 
 // test case 2 from lecture
@@ -60,7 +65,7 @@ TEST(LOOP_TEST, LOOP_TEST_2) {
            | |->2<---9
            | |  |  
            | |  V  
-           | ---3
+           | |--3
            |    |
            |    v
            |    4<---|
@@ -89,22 +94,22 @@ TEST(LOOP_TEST, LOOP_TEST_2) {
     Loop* root_loop = g.GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
-    CheckLoopBlocks(root_loop, {0, 8, 10});
+    CheckLoopBlocks(root_loop, {0, 8, 10}, true);
 
     Loop* loop_7_1 = root_loop->GetInnerLoops()[0];
     ASSERT_EQ(loop_7_1->GetOuterLoop(), root_loop);
     ASSERT_EQ(loop_7_1->GetInnerLoops().size(), 2);
-    CheckLoopBlocks(loop_7_1, {1, 2, 3, 4, 5, 6, 7, 9});
+    CheckLoopBlocks(loop_7_1, {1, 2, 3, 4, 5, 6, 7, 9}, false);
 
     Loop* loop_5_4 = loop_7_1->GetInnerLoops()[0];
     ASSERT_EQ(loop_5_4->GetOuterLoop(), loop_7_1);
     ASSERT_EQ(loop_5_4->GetInnerLoops().size(), 0);
-    CheckLoopBlocks(loop_5_4, {4, 5});
+    CheckLoopBlocks(loop_5_4, {4, 5}, false);
 
     Loop* loop_3_2 = loop_7_1->GetInnerLoops()[1];
     ASSERT_EQ(loop_3_2->GetOuterLoop(), loop_7_1);
     ASSERT_EQ(loop_3_2->GetInnerLoops().size(), 0);
-    CheckLoopBlocks(loop_3_2, {2, 3});
+    CheckLoopBlocks(loop_3_2, {2, 3}, false);
 }
 
 // test case 3 from lecture
@@ -145,12 +150,12 @@ TEST(LOOP_TEST, LOOP_TEST_3) {
     Loop* root_loop = g.GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
-    CheckLoopBlocks(root_loop, {0, 2, 3, 6, 7, 8});
+    CheckLoopBlocks(root_loop, {0, 2, 3, 6, 7, 8}, true);
 
     Loop* loop_5_1 = root_loop->GetInnerLoops()[0];
     ASSERT_EQ(loop_5_1->GetOuterLoop(), root_loop);
     ASSERT_EQ(loop_5_1->GetInnerLoops().size(), 0);
-    CheckLoopBlocks(loop_5_1, {1, 4, 5});
+    CheckLoopBlocks(loop_5_1, {1, 4, 5}, false);
 }
 
 // test case 4 from lecture
@@ -179,12 +184,12 @@ TEST(LOOP_TEST, LOOP_TEST_4) {
     Loop* root_loop = g.GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
-    CheckLoopBlocks(root_loop, {0, 4});
+    CheckLoopBlocks(root_loop, {0, 4}, true);
 
     Loop* loop_3_1 = root_loop->GetInnerLoops()[0];
     ASSERT_EQ(loop_3_1->GetOuterLoop(), root_loop);
     ASSERT_EQ(loop_3_1->GetInnerLoops().size(), 0);
-    CheckLoopBlocks(loop_3_1, {1, 2, 3});
+    CheckLoopBlocks(loop_3_1, {1, 2, 3}, false);
 }
 
 // test case 5 from lecture
@@ -214,12 +219,12 @@ TEST(LOOP_TEST, LOOP_TEST_5) {
     Loop* root_loop = g.GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
-    CheckLoopBlocks(root_loop, {0, 5});
+    CheckLoopBlocks(root_loop, {0, 5}, true);
 
     Loop* loop_4_1 = root_loop->GetInnerLoops()[0];
     ASSERT_EQ(loop_4_1->GetOuterLoop(), root_loop);
     ASSERT_EQ(loop_4_1->GetInnerLoops().size(), 0);
-    CheckLoopBlocks(loop_4_1, {1, 2, 3, 4});
+    CheckLoopBlocks(loop_4_1, {1, 2, 3, 4}, false);
 }
 
 // test case 6 from lecture
@@ -227,8 +232,10 @@ TEST(LOOP_TEST, LOOP_TEST_6) {
     /*
                 0<----------|
                 |           |
-                v           |
-            |---1<--|<--|   |
+                |<------|   |
+                |       |   |
+                v       |   |
+            |---1---|   |   |
             |       |   |   |
             V       |   |   |
         |---2       3   |   |
@@ -257,15 +264,50 @@ TEST(LOOP_TEST, LOOP_TEST_6) {
     Loop* root_loop = g.GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
-    CheckLoopBlocks(root_loop, {4});
+    CheckLoopBlocks(root_loop, {4}, true);
 
     Loop* loop_7_0 = root_loop->GetInnerLoops()[0];
     ASSERT_EQ(loop_7_0->GetOuterLoop(), root_loop);
     ASSERT_EQ(loop_7_0->GetInnerLoops().size(), 1);
-    CheckLoopBlocks(loop_7_0, {0, 1, 2, 3, 5, 6, 7});
+    CheckLoopBlocks(loop_7_0, {0, 1, 2, 3, 5, 6, 7}, false);
 
     Loop* loop_6_1 = loop_7_0->GetInnerLoops()[0];
     ASSERT_EQ(loop_6_1->GetOuterLoop(), loop_7_0);
     ASSERT_EQ(loop_6_1->GetInnerLoops().size(), 0);
-    CheckLoopBlocks(loop_6_1, {1, 2, 3, 5, 6});
+    CheckLoopBlocks(loop_6_1, {1, 2, 3, 5, 6}, false);
 }
+
+// TODO some day do loops split
+// TEST(LOOP_TEST, LOOP_TEST_SPLIT_LOOPS) {
+//     /*
+//                 0<--|<--|
+//                 |   |   |
+//                 v   |   |
+//                 1---|   |
+//                 |       |
+//                 v       |
+//                 2-------|
+//     */
+
+//     Graph g = GRAPH{
+//         BASIC_BLOCK<0, 1>({}),
+//         BASIC_BLOCK<1, 0, 2>({}),
+//         BASIC_BLOCK<2, 0>({}),
+//     };
+
+//     g.RunPass<LoopAnalyzer>();
+//     Loop* root_loop = g.GetRootLoop();
+//     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
+//     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
+//     CheckLoopBlocks(root_loop, {}, true);
+
+//     Loop* loop_2_0 = root_loop->GetInnerLoops()[0];
+//     ASSERT_EQ(loop_2_0->GetOuterLoop(), root_loop);
+//     ASSERT_EQ(loop_2_0->GetInnerLoops().size(), 1);
+//     CheckLoopBlocks(loop_2_0, {0, 1, 2}, false);
+
+//     Loop* loop_1_0 = loop_2_0->GetInnerLoops()[0];
+//     ASSERT_EQ(loop_1_0->GetOuterLoop(), loop_2_0);
+//     ASSERT_EQ(loop_1_0->GetInnerLoops().size(), 0);
+//     CheckLoopBlocks(loop_1_0, {0, 1}, false);
+// }

@@ -158,6 +158,26 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_2) {
 
 // test case 3 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_3) {
+    /*
+                0
+                |
+    |---------->|
+    |           |
+    |           v
+    |       |---1
+    |       |   |
+    |       V   V
+    |   |---4   2<--|
+    |   |   |   |   | 
+    |   V   |   V   |  
+    |---5   |-->3   |
+        |       |   |
+        |       v   |
+        |-->7-->6---|
+            |   |
+            |   v
+            |-->8
+    */
     Graph g = GRAPH{
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 4>({}),
@@ -275,6 +295,26 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_2) {
 
 // test case 3 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_3) {
+    /*
+                0
+                |
+    |---------->|
+    |           |
+    |           v
+    |       |---1
+    |       |   |
+    |       V   V
+    |   |---4   2<--|
+    |   |   |   |   | 
+    |   V   |   V   |  
+    |---5   |-->3   |
+        |       |   |
+        |       v   |
+        |-->7-->6---|
+            |   |
+            |   v
+            |-->8
+    */
     Graph g = GRAPH{
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 4>({}),

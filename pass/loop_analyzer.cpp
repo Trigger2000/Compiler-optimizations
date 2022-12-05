@@ -7,6 +7,9 @@ Loop::~Loop()
     for (auto inner_loop: inner_loops_) {
         delete inner_loop;
     }
+    if (pre_header_ != nullptr) {
+        delete pre_header_;
+    }
 }
 
 void LoopAnalyzer::RunPassImpl(Graph *g)
@@ -51,6 +54,54 @@ void LoopAnalyzer::ProccessEdge(BasicBlock *curr, BasicBlock *prev)
     curr->ResetMarker(gray_marker_);
 }
 
+// pre-headers are inserted virtually, original graph isn't changed
+// uncomment lines to affect the graph
+void Loop::CreatePreHeader()
+{
+    pre_header_ = BasicBlock::BasicBlockBuilder();
+    pre_header_->SetGraph(header_->GetGraph());
+    pre_header_->SetLoop(this);
+    pre_header_->AddSucc(header_);
+
+    auto header_preds = header_->GetPreds();
+    for (auto pred: header_preds) {
+        // header_->RemovePred(pred);
+        pre_header_->AddPred(pred);
+        // pred->RemoveSucc(header_);
+        // pred->AddSucc(pre_header_);
+    }
+
+    // header_->AddPred(pre_header_);
+    pre_header_->SetIDom(header_->GetIDom());
+    // header_->SetIDom(pre_header_);
+
+    PushBackBlock(pre_header_);
+}
+
+// TODO dont works properly
+void Loop::SplitLoops()
+{
+    Loop *curr_outer_loop = outer_loop_;
+    if (curr_outer_loop == nullptr) {
+        return;
+    }
+    BasicBlock* outer_header = curr_outer_loop->GetHeader();
+    while (outer_header == header_) {
+        BasicBlock* new_outer_header = BasicBlock::BasicBlockBuilder();
+        new_outer_header->SetGraph(outer_header->GetGraph());
+        new_outer_header->SetIDom(outer_header->GetIDom());
+        new_outer_header->SetLoop(outer_header->GetLoop());
+        outer_header->GetLoop()->SetHeader(new_outer_header);
+        outer_header->GetLoop()->PushBackBlock(new_outer_header);
+
+        curr_outer_loop = curr_outer_loop->GetOuterLoop();
+        if (curr_outer_loop == nullptr) {
+            return;
+        }
+        outer_header = curr_outer_loop->GetHeader();
+    }
+}
+
 void LoopAnalyzer::PopulateLoops()
 {
     g_->RunPass<RPO>();
@@ -77,8 +128,10 @@ void LoopAnalyzer::PopulateLoops()
             for (auto pred: back_edge_source->GetPreds()) {
                 LoopSearch(loop, pred);
             }
-
             loop->PushBackBlock(header_block);
+            
+            loop->CreatePreHeader();
+            // loop->SplitLoops();
             g_->EraseMarker(black_marker_);
         }
     }

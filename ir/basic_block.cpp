@@ -1,5 +1,12 @@
 #include "basic_block.h"
 
+BasicBlock* BasicBlock::BasicBlockBuilder()
+{
+    BasicBlock* result = new BasicBlock;
+    result->id_ = ++last_assigned_id_;
+    return result;
+}
+
 void BasicBlock::BasicBlockDestroyer(BasicBlock* bb)
 {
     assert(bb != nullptr);

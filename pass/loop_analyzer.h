@@ -17,6 +17,7 @@ public:
 
     ACCESSOR_MUTATOR(back_edge_source_, BackEdgeSource, BasicBlock*);
     ACCESSOR_MUTATOR(header_, Header, BasicBlock*);
+    ACCESSOR_MUTATOR(pre_header_, PreHeader, BasicBlock*);
     ACCESSOR_MUTATOR(inner_loops_, InnerLoops, std::vector<Loop*>&);
     ACCESSOR_MUTATOR(outer_loop_, OuterLoop, Loop*);
 
@@ -30,10 +31,13 @@ public:
         return blocks_;
     }
 
-private:
+    void CreatePreHeader();
+    void SplitLoops();
 
+private:
     BasicBlock *back_edge_source_ = nullptr;
     BasicBlock *header_ = nullptr;
+    BasicBlock *pre_header_ = nullptr;
     bool is_reducible_ = true;
     std::vector<Loop*> inner_loops_;
     Loop* outer_loop_ = nullptr;
