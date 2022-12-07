@@ -15,6 +15,8 @@
     FUNC(SUB, InstWithTwoInputs)                                                                                       \
     FUNC(MUL, InstWithTwoInputs)                                                                                       \
     FUNC(DIV, InstWithTwoInputs)                                                                                       \
+    FUNC(SHR, InstWithTwoInputs)                                                                                       \
+    FUNC(XOR, InstWithTwoInputs)                                                                                       \
     /* Control */                                                                                                      \
     FUNC(JMP, InstJmp)                                                                                                 \
     FUNC(JA, InstJmp)                                                                                                  \
@@ -29,18 +31,20 @@
 
 enum class Opcode
 {
-    DEFAULT,
 #define INIT_OPCODES(name, type) name,
     OPCODE_LIST(INIT_OPCODES)
 #undef INIT_OPCODES
+    DEFAULT,
+    SIZE
 };
 
 enum class Type
 {
-    DEFAULT,
 #define INIT_TYPES(type) type,
     TYPE_LIST(INIT_TYPES)
 #undef INIT_TYPES
+    DEFAULT,
+    SIZE
 };
 
 #endif // OPCODES_H

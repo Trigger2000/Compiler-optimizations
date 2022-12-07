@@ -10,8 +10,10 @@ class RPO;
 class DomTreeSlow;
 class DomTreeFast;
 class LoopAnalyzer;
+class ConstFolding;
+class DCE;
 
-using PassList = std::tuple<RPO, DomTreeSlow, DomTreeFast, LoopAnalyzer>;
+using PassList = std::tuple<RPO, DomTreeSlow, DomTreeFast, LoopAnalyzer, ConstFolding, DCE>;
 
 class PassManager {
 protected:

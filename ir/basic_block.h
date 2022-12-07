@@ -27,14 +27,17 @@ class BasicBlock : public Markers
         inst->SetPrev(last_inst_);
         inst->SetBB(this);
         last_inst_ = inst;
+        size_++;
     }
 
     void PushFrontInst(Inst* inst)
     {
         assert(inst->GetNext() == nullptr);
-        inst->SetNext(inst);
+        inst->SetNext(first_inst_);
         inst->SetBB(this);
+        first_inst_->SetPrev(inst);
         first_inst_ = inst;
+        size_++;
     }
 
     // inserts inst before reference_inst
@@ -47,6 +50,7 @@ class BasicBlock : public Markers
         inst->SetNext(reference_inst);
         reference_inst->SetPrev(inst);
         inst->SetBB(this);
+        size_++;
     }
 
     bool IsFirstBB()
@@ -78,6 +82,7 @@ class BasicBlock : public Markers
     ACCESSOR_MUTATOR(first_phi_, FirstPhi, Inst*)
     ACCESSOR_MUTATOR(graph_, Graph, Graph*)
     ACCESSOR_MUTATOR(id_, Id, uint32_t)
+    ACCESSOR_MUTATOR(size_, Size, uint32_t)
     ACCESSOR_MUTATOR(dominators_, Dominators, const std::vector<BasicBlock*>&)
     ACCESSOR_MUTATOR(idom_, IDom, BasicBlock*)
     ACCESSOR_MUTATOR(loop_, Loop, Loop*)
@@ -160,6 +165,7 @@ class BasicBlock : public Markers
     Loop* loop_ = nullptr;
 
     uint32_t id_ = 0;
+    uint32_t size_ = 0;
 };
 
 template <uint32_t bb_id, uint32_t... successors>
@@ -167,6 +173,7 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<Inst*> insts)
 {
     BasicBlock* result = new BasicBlock;
 
+    result->size_ = insts.size();
     // Bind instructions within basic block
     result->id_ = bb_id;
     if (insts.size() > 0) {

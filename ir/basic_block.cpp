@@ -6,7 +6,7 @@ void BasicBlock::BasicBlockDestroyer(BasicBlock* bb)
     for (Inst* item = bb->GetFirstInst(); item != nullptr;) {
         Inst* curr = item;
         item = item->GetNext();
-        Inst::InstDestroyer(curr);
+        delete curr;
     }
 
     delete bb;

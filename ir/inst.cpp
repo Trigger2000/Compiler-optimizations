@@ -22,20 +22,12 @@ void Inst::Dump()
 #undef PRINT_OPCODE
 }
 
-void Inst::InstDestroyer(Inst* inst)
+Inst::~Inst()
 {
-    assert(inst != nullptr);
-
-#define DESTROY_INST(type)                                                                                             \
-    case Type::type:                                                                                                   \
-        delete static_cast<type*>(inst);                                                                               \
-        break;
-
-    switch (inst->GetType()) {
-        TYPE_LIST(DESTROY_INST)
-    }
-
-#undef DESTROY_INST
+    if (GetPrev() != nullptr)
+        GetPrev()->SetNext(GetNext());
+    if (GetNext() != nullptr)
+        GetNext()->SetPrev(GetPrev());
 }
 
 bool Inst::IsStartInst()
@@ -110,4 +102,37 @@ void PhiInput::SetInputBB(BasicBlock* input_bb)
 {
     assert(input_bb->GetId() == input_bb_id_);
     input_bb_ = input_bb;
+}
+
+void InstWithTwoInputs::SubstituteInput(Inst* old_input, Inst* new_input)
+{
+    assert(GetInput1()->GetInputInst() == old_input || GetInput2()->GetInputInst() == old_input);
+    if (GetInput1()->GetInputInst() == old_input) {
+        GetInput1()->SetInputId(new_input->GetId());
+        GetInput1()->SetInputInst(new_input);
+    } else {
+        GetInput2()->SetInputId(new_input->GetId());
+        GetInput2()->SetInputInst(new_input);
+    }
+}
+
+void InstWithOneInput::SubstituteInput(Inst* old_input, Inst* new_input)
+{
+    assert(GetInput1()->GetInputInst() == old_input);
+    GetInput1()->SetInputId(new_input->GetId());
+    GetInput1()->SetInputInst(new_input);
+}
+
+void InstPhi::SubstituteInput(Inst* old_input, Inst* new_input)
+{
+    for (auto phi_input: GetPhiInputs()) {
+        if (phi_input->GetInputInst() == old_input) {
+            phi_input->SetInputId(new_input->GetId());
+            phi_input->SetInputInst(new_input);
+            phi_input->SetInputBB(new_input->GetBB());
+            phi_input->SetInputBBId(new_input->GetBB()->GetId());
+            return;
+        }
+    }
+    UNREACHABLE()
 }

@@ -26,7 +26,8 @@ class Inst
   public:
     template <typename... inputs>
     static Inst* InstBuilder(uint32_t ins_id, const Opcode op_in, inputs... in_range);
-    static void InstDestroyer(Inst* inst);
+    template <typename... inputs>
+    static Inst* InstBuilder(const Opcode op_in, inputs... in_range);
 
     ACCESSOR_MUTATOR(next_, Next, Inst*)
     ACCESSOR_MUTATOR(prev_, Prev, Inst*)
@@ -46,6 +47,10 @@ class Inst
     bool IsStartInst();
     bool IsEndInst();
     virtual void Dump();
+    virtual void SubstituteInput(Inst* old_input, Inst* new_input)
+    {}
+
+    virtual ~Inst();
 
   protected:
     Inst() = default;
@@ -62,6 +67,8 @@ class Inst
 
     Inst* next_ = nullptr;
     Inst* prev_ = nullptr;
+
+    static inline uint32_t max_ins_id_ = 0;
 };
 
 // user's definition happens in Graph while building DFG
@@ -164,6 +171,7 @@ class InstWithTwoInputs : public Inst
     ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
 
     void Dump() override;
+    void SubstituteInput(Inst* old_input, Inst* new_input) override;
 
     ~InstWithTwoInputs()
     {
@@ -200,6 +208,7 @@ class InstWithOneInput : public Inst
     ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
 
     void Dump() override;
+    void SubstituteInput(Inst* old_input, Inst* new_input) override;
 
     ~InstWithOneInput()
     {
@@ -264,6 +273,7 @@ class InstPhi : public Inst
     ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
 
     void Dump() override;
+    void SubstituteInput(Inst* old_input, Inst* new_input) override;
 
   private:
     InstPhi(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inputs) : Inst(id, op, type)
@@ -337,6 +347,9 @@ class InstConstant : public Inst
 template <typename... inputs>
 Inst* Inst::InstBuilder(uint32_t ins_id, const Opcode op_in, inputs... inputs_range)
 {
+    if (max_ins_id_ < ins_id)
+        max_ins_id_ = ins_id;
+
 #define BUILD_INST(name, type)                                                                                         \
     case Opcode::name: {                                                                                               \
         type* new_inst = type::CreateInst(ins_id, op_in, inputs_range...);                                             \
@@ -349,6 +362,13 @@ Inst* Inst::InstBuilder(uint32_t ins_id, const Opcode op_in, inputs... inputs_ra
 #undef BUILD_INST
 
     return nullptr;
+}
+
+template <typename... inputs>
+Inst* Inst::InstBuilder(const Opcode op_in, inputs... inputs_range)
+{
+    max_ins_id_++;
+    return Inst::InstBuilder(max_ins_id_, op_in, inputs_range...);
 }
 
 // TODO compile-time magic, rather hacky...
