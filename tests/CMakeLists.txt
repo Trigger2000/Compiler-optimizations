@@ -4,6 +4,7 @@ set(TEST_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/ir_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/loop_test.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/const_folding_test.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/peephole_test.cpp
 )
 
 set(GTEST_INCLUDE_DIR third-party/googletest/googletest/include)

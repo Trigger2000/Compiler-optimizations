@@ -31,17 +31,6 @@ void ConstFolding::CreateNewConstant(Inst* old_inst, int32_t constant)
         new_inst->GetUsers().AddUser(user);
         user->SubstituteInput(old_inst, new_inst);
     }
-
-    auto input1 = old_inst->GetInput1()->GetInputInst();
-    auto input2 = old_inst->GetInput2()->GetInputInst();
-    input1->GetUsers().RemoveUser(old_inst);
-    if (input1->GetUsers().GetUsers().size() == 0) {
-        input1->SetBB(nullptr);
-    }
-    input2->GetUsers().RemoveUser(old_inst);
-    if (input2->GetUsers().GetUsers().size() == 0) {
-        input2->SetBB(nullptr);
-    }
     old_inst->SetBB(nullptr);
 }
 

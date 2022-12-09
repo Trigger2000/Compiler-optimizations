@@ -7,12 +7,13 @@
 #include <initializer_list>
 #include <list>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 #include "opcode.h"
 #include "utils.h"
+#include "marker.h"
 
 class InstInput;
 class JmpInput;
@@ -21,7 +22,7 @@ class InstUsers;
 class BasicBlock;
 
 // base class for all instructions
-class Inst
+class Inst : public Markers
 {
   public:
     template <typename... inputs>
@@ -40,7 +41,7 @@ class Inst
     ACCESSOR_MUTATOR_VIRTUAL(input1_, Input1, InstInput*)
     ACCESSOR_MUTATOR_VIRTUAL(input2_, Input2, InstInput*)
     ACCESSOR_MUTATOR_VIRTUAL(target_inst_, TargetInst, JmpInput*)
-    ACCESSOR_MUTATOR_VIRTUAL(constant_, Constant, uint32_t)
+    ACCESSOR_MUTATOR_VIRTUAL(constant_, Constant, int32_t)
     ACCESSOR_MUTATOR_VIRTUAL(phi_inputs_, PhiInputs, std::list<PhiInput*>&)
     ACCESSOR_MUTATOR_VIRTUAL(users_, Users, InstUsers&)
 
@@ -82,7 +83,8 @@ class InstUsers
 
     void AddUser(Inst* user)
     {
-        users_.push_back(user);
+        if (std::find(users_.begin(), users_.end(), user) == users_.end())
+            users_.push_back(user);
     }
 
     void RemoveUser(Inst* user)
@@ -322,13 +324,13 @@ class InstConstant : public Inst
     template <bool is_phi = false, typename... inputs>
     static InstConstant* CreateInst(uint32_t id, Opcode op, inputs... inps);
 
-    ACCESSOR_MUTATOR_OVERRIDE(constant_, Constant, uint32_t)
+    ACCESSOR_MUTATOR_OVERRIDE(constant_, Constant, int32_t)
     ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
 
     void Dump() override;
 
   private:
-    InstConstant(uint32_t id, Opcode op, Type type, uint32_t constant) : Inst(id, op, type), constant_(constant)
+    InstConstant(uint32_t id, Opcode op, Type type, int32_t constant) : Inst(id, op, type), constant_(constant)
     {
     }
 
@@ -340,7 +342,7 @@ class InstConstant : public Inst
 
     static const uint32_t INPUTS_COUNT = 1;
 
-    uint32_t constant_ = 0;
+    int32_t constant_ = 0;
     InstUsers users_;
 };
 

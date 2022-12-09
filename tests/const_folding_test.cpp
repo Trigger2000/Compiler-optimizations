@@ -75,28 +75,3 @@ TEST(CONST_FOLDING_TEST, TEST4) {
     ASSERT_EQ(bb->GetFirstInst()->GetOpcode(), Opcode::CONSTANT);
     ASSERT_EQ(bb->GetFirstInst()->GetConstant(), 72);
 }
-
-// write more tests...
-// TEST(CONST_FOLDING_TEST, TEST5) {
-//     Graph g = GRAPH{
-//         BASIC_BLOCK<1>({
-//             INST(1, Opcode::PARAMETER),
-//             INST(2, Opcode::CONSTANT, 100),
-//             INST(3, Opcode::CONSTANT, 64),
-//             INST(4, Opcode::CONSTANT, 3),
-//             INST(5, Opcode::CONSTANT, 20),
-//             INST(6, Opcode::SHR, 2, 3),
-//             INST(7, Opcode::SUB, 1, 5),
-//             INST(8, Opcode::XOR, 6, 4),
-//         }),
-//     };
-
-//     for (int i = 0; i < 5; ++i) {
-//         g.RunPass<ConstFolding>();
-//     }
-
-//     auto bb = g.GetBasicBlocks()[0];
-//     ASSERT_EQ(bb->GetSize(), 1);
-//     ASSERT_EQ(bb->GetFirstInst()->GetOpcode(), Opcode::CONSTANT);
-//     ASSERT_EQ(bb->GetFirstInst()->GetConstant(), 72);
-// }

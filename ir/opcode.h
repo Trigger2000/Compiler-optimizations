@@ -16,7 +16,9 @@
     FUNC(MUL, InstWithTwoInputs)                                                                                       \
     FUNC(DIV, InstWithTwoInputs)                                                                                       \
     FUNC(SHR, InstWithTwoInputs)                                                                                       \
+    FUNC(SHL, InstWithTwoInputs)                                                                                       \
     FUNC(XOR, InstWithTwoInputs)                                                                                       \
+    FUNC(NOT, InstWithOneInput)                                                                                        \
     /* Control */                                                                                                      \
     FUNC(JMP, InstJmp)                                                                                                 \
     FUNC(JA, InstJmp)                                                                                                  \

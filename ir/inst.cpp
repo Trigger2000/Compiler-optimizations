@@ -28,6 +28,12 @@ Inst::~Inst()
         GetPrev()->SetNext(GetNext());
     if (GetNext() != nullptr)
         GetNext()->SetPrev(GetPrev());
+    if (GetBB() != nullptr) {
+        if (GetBB()->GetFirstInst() == this)
+            GetBB()->SetFirstInst(GetNext());
+        if (GetBB()->GetLastInst() == this)
+            GetBB()->SetLastInst(GetPrev());
+    }
 }
 
 bool Inst::IsStartInst()

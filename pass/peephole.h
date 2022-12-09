@@ -13,6 +13,8 @@ private:
     static void VisitSHR(Inst *inst);
     static void VisitXOR(Inst *inst);
 
+    static void ProcessUsersInputs(Inst * old_inst, Inst *new_inst);
+
     #define BUILD_DISPATCH_TABLE(name, type)    \
     Visit##name,
 
