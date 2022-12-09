@@ -1,8 +1,7 @@
-# Compiler-optimizations v4
+# Compiler-optimizations v5
 
 Major changes:  
-    - Added loop analyzer with tests  
-    - Introduced Marker and MarkerManager classes
+    - Added passes with tests: constant folding, peephole, DCE
 
 # Build and launch test
 ```
