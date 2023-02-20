@@ -46,7 +46,7 @@ void Peephole::VisitSUB(Inst* inst)
     // 2 constant 0
     // users(v1) = users(v2)
     if (inst->GetInput1()->GetInputInst() == inst->GetInput2()->GetInputInst()) {
-        auto new_inst = Inst::InstBuilder(Opcode::CONSTANT, 0);
+        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId(), 0);
         inst->GetBB()->PushFrontInst(new_inst);
         ProcessUsersInputs(inst, new_inst);
         inst->SetBB(nullptr);
@@ -93,7 +93,7 @@ void Peephole::VisitSUB(Inst* inst)
         inst->GetPrev()->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT) {
         int32_t new_const = inst->GetInput2()->GetInputInst()->GetConstant() +
                             inst->GetPrev()->GetInput2()->GetInputInst()->GetConstant();
-        auto new_inst = Inst::InstBuilder(Opcode::CONSTANT, new_const);
+        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId(), new_const);
         inst->GetBB()->PushFrontInst(new_inst);
         new_inst->GetUsers().AddUser(inst);
 
@@ -152,7 +152,7 @@ void Peephole::VisitSHR(Inst* inst)
         inst->GetPrev()->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT) {
         int32_t new_const = inst->GetInput2()->GetInputInst()->GetConstant() +
                             inst->GetPrev()->GetInput2()->GetInputInst()->GetConstant();
-        auto new_inst = Inst::InstBuilder(Opcode::CONSTANT, new_const);
+        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId(), new_const);
         inst->GetBB()->PushFrontInst(new_inst);
         new_inst->GetUsers().AddUser(inst);
 
@@ -190,7 +190,7 @@ void Peephole::VisitXOR(Inst* inst)
     // 2 constant 0
     // users(v1) = users(v2)
     if (inst->GetInput1()->GetInputInst() == inst->GetInput2()->GetInputInst()) {
-        auto new_inst = Inst::InstBuilder(Opcode::CONSTANT, 0);
+        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId(), 0);
         inst->GetBB()->PushFrontInst(new_inst);
         ProcessUsersInputs(inst, new_inst);
         inst->SetBB(nullptr);
@@ -203,7 +203,7 @@ void Peephole::VisitXOR(Inst* inst)
     if (inst->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT &&
         inst->GetInput2()->GetInputInst()->GetConstant() == -1) {
 
-        auto new_inst = Inst::InstBuilder(Opcode::NOT, inst->GetInput1()->GetInputId());
+        auto new_inst = Inst::InstBuilder<Opcode::NOT>(Inst::NextId(), inst->GetInput1()->GetInputId());
         inst->GetBB()->InsertInst(inst, new_inst);
         new_inst->GetInput1()->SetInputInst(inst->GetInput1()->GetInputInst());
         inst->GetInput1()->GetInputInst()->GetUsers().RemoveUser(inst);

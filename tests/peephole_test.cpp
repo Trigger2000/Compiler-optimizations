@@ -33,12 +33,12 @@ TEST(PEEPHOLE_TEST, TEST_SUB) {
     // case 1
     Graph g1 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::CONSTANT, 0),
-            INST(3, Opcode::CONSTANT, 32),
-            INST(4, Opcode::SUB, 1, 2),
-            INST(5, Opcode::SUB, 1, 3),
-            INST(6, Opcode::ADD, 4, 5),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::CONSTANT>(2, 0),
+            INST<Opcode::CONSTANT>(3, 32),
+            INST<Opcode::SUB>(4, 1, 2),
+            INST<Opcode::SUB>(5, 1, 3),
+            INST<Opcode::ADD>(6, 4, 5),
         }),
     };
     g1.RunPass<Peephole>();
@@ -53,11 +53,11 @@ TEST(PEEPHOLE_TEST, TEST_SUB) {
     // case 2 + case 1
     Graph g2 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::CONSTANT, 32),
-            INST(3, Opcode::SUB, 1, 1),
-            INST(4, Opcode::SUB, 1, 3),
-            INST(5, Opcode::ADD, 1, 2),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::CONSTANT>(2, 32),
+            INST<Opcode::SUB>(3, 1, 1),
+            INST<Opcode::SUB>(4, 1, 3),
+            INST<Opcode::ADD>(5, 1, 2),
         }),
     };
     g2.RunPass<Peephole>();
@@ -72,11 +72,11 @@ TEST(PEEPHOLE_TEST, TEST_SUB) {
     // case 3
     Graph g3 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::PARAMETER),
-            INST(3, Opcode::ADD, 1, 2),
-            INST(4, Opcode::SUB, 3, 2),
-            INST(5, Opcode::ADD, 3, 4),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::PARAMETER>(2),
+            INST<Opcode::ADD>(3, 1, 2),
+            INST<Opcode::SUB>(4, 3, 2),
+            INST<Opcode::ADD>(5, 3, 4),
         }),
     };
     g3.RunPass<Peephole>();
@@ -90,11 +90,11 @@ TEST(PEEPHOLE_TEST, TEST_SUB) {
     // case 4
     Graph g4 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::PARAMETER),
-            INST(3, Opcode::SUB, 1, 2),
-            INST(4, Opcode::SUB, 1, 3),
-            INST(5, Opcode::ADD, 4, 1),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::PARAMETER>(2),
+            INST<Opcode::SUB>(3, 1, 2),
+            INST<Opcode::SUB>(4, 1, 3),
+            INST<Opcode::ADD>(5, 4, 1),
         }),
     };
     g4.RunPass<Peephole>();
@@ -109,12 +109,12 @@ TEST(PEEPHOLE_TEST, TEST_SUB) {
     // case 5
     Graph g5 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::CONSTANT, 8),
-            INST(3, Opcode::CONSTANT, 16),
-            INST(4, Opcode::SUB, 1, 2),
-            INST(5, Opcode::SUB, 4, 3),
-            INST(6, Opcode::ADD, 5, 4),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::CONSTANT>(2, 8),
+            INST<Opcode::CONSTANT>(3, 16),
+            INST<Opcode::SUB>(4, 1, 2),
+            INST<Opcode::SUB>(5, 4, 3),
+            INST<Opcode::ADD>(6, 5, 4),
         }),
     };
     g5.RunPass<Peephole>();
@@ -133,12 +133,12 @@ TEST(PEEPHOLE_TEST, TEST_SHR) {
     // case 1
     Graph g1 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::CONSTANT, 0),
-            INST(3, Opcode::CONSTANT, 4),
-            INST(4, Opcode::SHR, 1, 2),
-            INST(5, Opcode::SHR, 1, 3),
-            INST(6, Opcode::ADD, 4, 5),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::CONSTANT>(2, 0),
+            INST<Opcode::CONSTANT>(3, 4),
+            INST<Opcode::SHR>(4, 1, 2),
+            INST<Opcode::SHR>(5, 1, 3),
+            INST<Opcode::ADD>(6, 4, 5),
         }),
     };
     g1.RunPass<Peephole>();
@@ -153,11 +153,11 @@ TEST(PEEPHOLE_TEST, TEST_SHR) {
     // case 2
     Graph g2 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::PARAMETER),
-            INST(3, Opcode::SHL, 1, 2),
-            INST(4, Opcode::SHR, 3, 2),
-            INST(5, Opcode::ADD, 3, 4),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::PARAMETER>(2),
+            INST<Opcode::SHL>(3, 1, 2),
+            INST<Opcode::SHR>(4, 3, 2),
+            INST<Opcode::ADD>(5, 3, 4),
         }),
     };
     g2.RunPass<Peephole>();
@@ -171,12 +171,12 @@ TEST(PEEPHOLE_TEST, TEST_SHR) {
     // case 3
     Graph g3 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::CONSTANT, 8),
-            INST(3, Opcode::CONSTANT, 16),
-            INST(4, Opcode::SHR, 1, 2),
-            INST(5, Opcode::SHR, 4, 3),
-            INST(6, Opcode::ADD, 5, 4),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::CONSTANT>(2, 8),
+            INST<Opcode::CONSTANT>(3, 16),
+            INST<Opcode::SHR>(4, 1, 2),
+            INST<Opcode::SHR>(5, 4, 3),
+            INST<Opcode::ADD>(6, 5, 4),
         }),
     };
     g3.RunPass<Peephole>();
@@ -195,12 +195,12 @@ TEST(PEEPHOLE_TEST, TEST_XOR) {
     // case 1
     Graph g1 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::CONSTANT, 0),
-            INST(3, Opcode::CONSTANT, 4),
-            INST(4, Opcode::XOR, 1, 2),
-            INST(5, Opcode::XOR, 1, 3),
-            INST(6, Opcode::ADD, 4, 5),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::CONSTANT>(2, 0),
+            INST<Opcode::CONSTANT>(3, 4),
+            INST<Opcode::XOR>(4, 1, 2),
+            INST<Opcode::XOR>(5, 1, 3),
+            INST<Opcode::ADD>(6, 4, 5),
         }),
     };
     g1.RunPass<Peephole>();
@@ -215,11 +215,11 @@ TEST(PEEPHOLE_TEST, TEST_XOR) {
     // case 2 + case 1
     Graph g2 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::CONSTANT, 32),
-            INST(3, Opcode::SUB, 1, 1),
-            INST(4, Opcode::SUB, 1, 3),
-            INST(5, Opcode::ADD, 1, 2),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::CONSTANT>(2, 32),
+            INST<Opcode::SUB>(3, 1, 1),
+            INST<Opcode::SUB>(4, 1, 3),
+            INST<Opcode::ADD>(5, 1, 2),
         }),
     };
     g2.RunPass<Peephole>();
@@ -234,10 +234,10 @@ TEST(PEEPHOLE_TEST, TEST_XOR) {
     // case 3
     Graph g3 = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::CONSTANT, -1),
-            INST(3, Opcode::XOR, 1, 2),
-            INST(4, Opcode::ADD, 1, 3),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::CONSTANT>(2, -1),
+            INST<Opcode::XOR>(3, 1, 2),
+            INST<Opcode::ADD>(4, 1, 3),
         }),
     };
     g3.RunPass<Peephole>();

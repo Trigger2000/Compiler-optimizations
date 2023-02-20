@@ -25,7 +25,7 @@ bool ConstFolding::CheckConstInput(Inst *inst)
 
 void ConstFolding::CreateNewConstant(Inst* old_inst, int32_t constant)
 {
-    Inst* new_inst = Inst::InstBuilder(Opcode::CONSTANT, constant);
+    Inst* new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId(), constant);
     old_inst->GetBB()->PushFrontInst(new_inst);
     for (auto user: old_inst->GetUsers().GetUsers()) {
         new_inst->GetUsers().AddUser(user);

@@ -1,6 +1,8 @@
 #ifndef DOM_TREE_FAST_H
 #define DOM_TREE_FAST_H
 
+#include <unordered_map>
+
 #include "ir/graph.h"
 
 // algorithm from https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/a%20fast%20algorithm%20for%20finding.pdf

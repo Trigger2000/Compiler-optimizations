@@ -10,9 +10,9 @@
 TEST(CONST_FOLDING_TEST, TEST1) {
     Graph g = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::CONSTANT, 2),
-            INST(2, Opcode::CONSTANT, 8),
-            INST(3, Opcode::SUB, 2, 1),
+            INST<Opcode::CONSTANT>(1, 2),
+            INST<Opcode::CONSTANT>(2, 8),
+            INST<Opcode::SUB>(3, 2, 1),
         }),
     };
     g.RunPass<ConstFolding>();
@@ -26,9 +26,9 @@ TEST(CONST_FOLDING_TEST, TEST1) {
 TEST(CONST_FOLDING_TEST, TEST2) {
     Graph g = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::CONSTANT, 2),
-            INST(2, Opcode::CONSTANT, 8),
-            INST(3, Opcode::SHR, 2, 1),
+            INST<Opcode::CONSTANT>(1, 2),
+            INST<Opcode::CONSTANT>(2, 8),
+            INST<Opcode::SHR>(3, 2, 1),
         }),
     };
     g.RunPass<ConstFolding>();
@@ -42,9 +42,9 @@ TEST(CONST_FOLDING_TEST, TEST2) {
 TEST(CONST_FOLDING_TEST, TEST3) {
     Graph g = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::CONSTANT, 2),
-            INST(2, Opcode::CONSTANT, 8),
-            INST(3, Opcode::XOR, 2, 1),
+            INST<Opcode::CONSTANT>(1, 2),
+            INST<Opcode::CONSTANT>(2, 8),
+            INST<Opcode::XOR>(3, 2, 1),
         }),
     };
     g.RunPass<ConstFolding>();
@@ -58,13 +58,13 @@ TEST(CONST_FOLDING_TEST, TEST3) {
 TEST(CONST_FOLDING_TEST, TEST4) {
     Graph g = GRAPH{
         BASIC_BLOCK<1>({
-            INST(1, Opcode::CONSTANT, 100),
-            INST(2, Opcode::CONSTANT, 64),
-            INST(3, Opcode::CONSTANT, 3),
-            INST(4, Opcode::CONSTANT, 20),
-            INST(5, Opcode::SHR, 2, 3),
-            INST(6, Opcode::SUB, 1, 5),
-            INST(7, Opcode::XOR, 6, 4),
+            INST<Opcode::CONSTANT>(1, 100),
+            INST<Opcode::CONSTANT>(2, 64),
+            INST<Opcode::CONSTANT>(3, 3),
+            INST<Opcode::CONSTANT>(4, 20),
+            INST<Opcode::SHR>(5, 2, 3),
+            INST<Opcode::SUB>(6, 1, 5),
+            INST<Opcode::XOR>(7, 6, 4),
         }),
     };
 

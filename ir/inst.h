@@ -20,15 +20,14 @@ class JmpInput;
 class PhiInput;
 class InstUsers;
 class BasicBlock;
+class Graph;
 
 // base class for all instructions
 class Inst : public Markers
 {
   public:
-    template <typename... inputs>
-    static Inst* InstBuilder(uint32_t ins_id, const Opcode op_in, inputs... in_range);
-    template <typename... inputs>
-    static Inst* InstBuilder(const Opcode op_in, inputs... in_range);
+    template <Opcode opcode, typename... inputs>
+    static Inst* InstBuilder(uint32_t ins_id, inputs... in_range);
 
     ACCESSOR_MUTATOR(next_, Next, Inst*)
     ACCESSOR_MUTATOR(prev_, Prev, Inst*)
@@ -42,7 +41,7 @@ class Inst : public Markers
     ACCESSOR_MUTATOR_VIRTUAL(input2_, Input2, InstInput*)
     ACCESSOR_MUTATOR_VIRTUAL(target_inst_, TargetInst, JmpInput*)
     ACCESSOR_MUTATOR_VIRTUAL(constant_, Constant, int32_t)
-    ACCESSOR_MUTATOR_VIRTUAL(phi_inputs_, PhiInputs, std::list<PhiInput*>&)
+    ACCESSOR_MUTATOR_VIRTUAL(phi_inputs_, PhiInputs, std::vector<PhiInput*>&)
     ACCESSOR_MUTATOR_VIRTUAL(users_, Users, InstUsers&)
 
     bool IsStartInst();
@@ -53,6 +52,10 @@ class Inst : public Markers
 
     virtual ~Inst();
 
+    static uint32_t NextId()
+    {
+        return next_id_;
+    }
   protected:
     Inst() = default;
     Inst(Inst& inst) = default;
@@ -69,7 +72,7 @@ class Inst : public Markers
     Inst* next_ = nullptr;
     Inst* prev_ = nullptr;
 
-    static inline uint32_t max_ins_id_ = 0;
+    static inline uint32_t next_id_ = 0;
 };
 
 // user's definition happens in Graph while building DFG
@@ -165,8 +168,11 @@ class PhiInput : public InstInput
 class InstWithTwoInputs : public Inst
 {
   public:
-    template <bool is_phi = false, typename... inputs>
-    static InstWithTwoInputs* CreateInst(uint32_t id, Opcode op, inputs... inps);
+    template <Opcode opcode, typename... inputs>
+    static Inst* CreateInst(uint32_t id, inputs... inputs_range)
+    {
+        return static_cast<Inst*>(new InstWithTwoInputs(id, opcode, inputs_range...));
+    }
 
     ACCESSOR_MUTATOR_OVERRIDE(input1_, Input1, InstInput*)
     ACCESSOR_MUTATOR_OVERRIDE(input2_, Input2, InstInput*)
@@ -182,19 +188,12 @@ class InstWithTwoInputs : public Inst
     }
 
   private:
-    InstWithTwoInputs(uint32_t id, Opcode op, Type type, uint32_t input1, uint32_t input2) : Inst(id, op, type)
+  InstWithTwoInputs(uint32_t id, Opcode op, uint32_t input1, uint32_t input2) : Inst(id, op, Type::InstWithTwoInputs)
     {
         input1_ = new InstInput(input1);
         input2_ = new InstInput(input2);
     }
 
-    //  TODO temporary workaround
-    InstWithTwoInputs(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
-    {
-        UNREACHABLE();
-    }
-
-    static const uint32_t INPUTS_COUNT = 2;
     InstInput* input1_ = nullptr;
     InstInput* input2_ = nullptr;
     InstUsers users_;
@@ -203,8 +202,11 @@ class InstWithTwoInputs : public Inst
 class InstWithOneInput : public Inst
 {
   public:
-    template <bool is_phi = false, typename... inputs>
-    static InstWithOneInput* CreateInst(uint32_t id, Opcode op, inputs... inps);
+    template <Opcode opcode, typename... inputs>
+    static Inst* CreateInst(uint32_t id, inputs... inputs_range)
+    {
+        return static_cast<Inst*>(new InstWithOneInput(id, opcode, inputs_range...));
+    }
 
     ACCESSOR_MUTATOR_OVERRIDE(input1_, Input1, InstInput*)
     ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
@@ -218,18 +220,11 @@ class InstWithOneInput : public Inst
     }
 
   private:
-    InstWithOneInput(uint32_t id, Opcode op, Type type, uint32_t input1) : Inst(id, op, type)
+  InstWithOneInput(uint32_t id, Opcode op, uint32_t input1) : Inst(id, op, Type::InstWithOneInput)
     {
         input1_ = new InstInput(input1);
     }
 
-    //  TODO temporary workaround
-    InstWithOneInput(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
-    {
-        UNREACHABLE()
-    }
-
-    static const uint32_t INPUTS_COUNT = 1;
     InstInput* input1_ = nullptr;
     InstUsers users_;
 };
@@ -237,8 +232,11 @@ class InstWithOneInput : public Inst
 class InstJmp : public Inst
 {
   public:
-    template <bool is_phi = false, typename... inputs>
-    static InstJmp* CreateInst(uint32_t id, Opcode op, inputs... inps);
+    template <Opcode opcode, typename... inputs>
+    static Inst* CreateInst(uint32_t id, inputs... inputs_range)
+    {
+        return static_cast<Inst*>(new InstJmp(id, opcode, inputs_range...));
+    }
 
     ACCESSOR_MUTATOR_OVERRIDE(target_inst_, TargetInst, JmpInput*)
 
@@ -250,35 +248,31 @@ class InstJmp : public Inst
     }
 
   private:
-    InstJmp(uint32_t id, Opcode op, Type type, uint32_t target_inst_id) : Inst(id, op, type)
+    InstJmp(uint32_t id, Opcode op, uint32_t target_inst_id) : Inst(id, op, Type::InstJmp)
     {
         target_inst_ = new JmpInput(target_inst_id);
     }
 
-    //  TODO temporary workaround
-    InstJmp(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
-    {
-        UNREACHABLE()
-    }
-
-    static const uint32_t INPUTS_COUNT = 1;
     JmpInput* target_inst_ = nullptr;
 };
 
 class InstPhi : public Inst
 {
   public:
-    template <bool is_phi = true, typename... inputs>
-    static InstPhi* CreateInst(uint32_t id, Opcode op, inputs... inps);
+    template <Opcode opcode, typename... inputs>
+    static Inst* CreateInst(uint32_t id, inputs... inputs_range)
+    {
+        return static_cast<Inst*>(new InstPhi(id, opcode, {inputs_range...}));
+    }
 
-    ACCESSOR_MUTATOR_OVERRIDE(phi_inputs_, PhiInputs, std::list<PhiInput*>&)
+    ACCESSOR_MUTATOR_OVERRIDE(phi_inputs_, PhiInputs, std::vector<PhiInput*>&)
     ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
 
     void Dump() override;
     void SubstituteInput(Inst* old_input, Inst* new_input) override;
 
   private:
-    InstPhi(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inputs) : Inst(id, op, type)
+  InstPhi(uint32_t id, Opcode op, std::initializer_list<uint32_t> inputs) : Inst(id, op, Type::InstPhi)
     {
         if (inputs.size() % 2 != 0) {
             throw_inst_error("Invalid inputs to ", op);
@@ -288,41 +282,60 @@ class InstPhi : public Inst
         }
     }
 
-    static const uint32_t INPUTS_COUNT = 0; // variable inputs
-    std::list<PhiInput*> phi_inputs_;
+    std::vector<PhiInput*> phi_inputs_;
     InstUsers users_;
+};
+
+class InstCall : public Inst
+{
+public:
+    template <Opcode opcode, typename... inputs>
+    static Inst* CreateInst(uint32_t id, inputs... inputs_range)
+    {
+        return static_cast<Inst*>(new InstCall(id, opcode, inputs_range...));
+    }
+    void Dump() override;
+
+private:
+    template <typename... inputs>
+    InstCall(uint32_t id, Opcode op, Graph* callee, inputs... inputs_range) : Inst(id, op, Type::InstCall), callee_(callee),
+    arguments_({new InstInput(inputs_range)...})
+    {
+    }
+
+    Graph* callee_;
+    std::vector<InstInput*> arguments_;
 };
 
 class InstParameter : public Inst
 {
   public:
-    template <bool is_phi = false, typename... inputs>
-    static InstParameter* CreateInst(uint32_t id, Opcode op, inputs... inps);
+    template <Opcode opcode, typename... inputs>
+    static Inst* CreateInst(uint32_t id, inputs... inputs_range)
+    {
+        return static_cast<Inst*>(new InstParameter(id, opcode, inputs_range...));
+    }
 
     ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
     
     void Dump() override;
 
   private:
-    InstParameter(uint32_t id, Opcode op, Type type) : Inst(id, op, type)
+  InstParameter(uint32_t id, Opcode op) : Inst(id, op, Type::InstParameter)
     {
     }
 
-    //  TODO temporary workaround
-    InstParameter(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
-    {
-        UNREACHABLE()
-    }
-
-    static const uint32_t INPUTS_COUNT = 0;
     InstUsers users_;
 };
 
 class InstConstant : public Inst
 {
   public:
-    template <bool is_phi = false, typename... inputs>
-    static InstConstant* CreateInst(uint32_t id, Opcode op, inputs... inps);
+    template <Opcode opcode, typename... inputs>
+    static Inst* CreateInst(uint32_t id, inputs... inputs_range)
+    {
+        return static_cast<Inst*>(new InstConstant(id, opcode, inputs_range...));
+    }
 
     ACCESSOR_MUTATOR_OVERRIDE(constant_, Constant, int32_t)
     ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
@@ -330,71 +343,30 @@ class InstConstant : public Inst
     void Dump() override;
 
   private:
-    InstConstant(uint32_t id, Opcode op, Type type, int32_t constant) : Inst(id, op, type), constant_(constant)
+  InstConstant(uint32_t id, Opcode op, int32_t constant) : Inst(id, op, Type::InstConstant), constant_(constant)
     {
     }
-
-    //  TODO temporary workaround
-    InstConstant(uint32_t id, Opcode op, Type type, std::initializer_list<uint32_t> inps)
-    {
-        UNREACHABLE()
-    }
-
-    static const uint32_t INPUTS_COUNT = 1;
 
     int32_t constant_ = 0;
     InstUsers users_;
 };
 
-template <typename... inputs>
-Inst* Inst::InstBuilder(uint32_t ins_id, const Opcode op_in, inputs... inputs_range)
+template <Opcode opcode, typename... inputs>
+Inst* Inst::InstBuilder(uint32_t ins_id, inputs... inputs_range)
 {
-    if (max_ins_id_ < ins_id)
-        max_ins_id_ = ins_id;
+    if (next_id_ < ins_id)
+        next_id_ = ins_id;
+    next_id_++;
 
-#define BUILD_INST(name, type)                                                                                         \
-    case Opcode::name: {                                                                                               \
-        type* new_inst = type::CreateInst(ins_id, op_in, inputs_range...);                                             \
-        return static_cast<Inst*>(new_inst);                                                                           \
+#define BUILD_INST(name, type)                                                         \
+    if constexpr (opcode == Opcode::name) {                                          \
+        return type::CreateInst<opcode>(ins_id, inputs_range...);                       \
     }
 
-    switch (op_in) {
-        OPCODE_LIST(BUILD_INST)
-    }
+    OPCODE_LIST(BUILD_INST)
 #undef BUILD_INST
-
+    UNREACHABLE()
     return nullptr;
 }
-
-template <typename... inputs>
-Inst* Inst::InstBuilder(const Opcode op_in, inputs... inputs_range)
-{
-    max_ins_id_++;
-    return Inst::InstBuilder(max_ins_id_, op_in, inputs_range...);
-}
-
-// TODO compile-time magic, rather hacky...
-#define CREATE_INST(type)                                                                                              \
-    template <bool is_phi, typename... inputs>                                                                         \
-    type* type::CreateInst(uint32_t id, Opcode op, inputs... inps)                                                     \
-    {                                                                                                                  \
-        type* result = nullptr;                                                                                        \
-        /* this statement doesn't works as I want, so to each class constructor with   */                              \
-        /* std::initializer_list<uint32_t> should be added */                                                          \
-        if constexpr (is_phi) {                                                                                        \
-            result = new type(id, op, Type::type, std::initializer_list<uint32_t>{ inps... });                         \
-        }                                                                                                              \
-        if constexpr (is_phi == false) {                                                                               \
-            if constexpr (sizeof...(inps) == type::INPUTS_COUNT) {                                                     \
-                result = new type(id, op, Type::type, inps...);                                                        \
-            } else {                                                                                                   \
-                throw_inst_error("Invalid inputs to ", op);                                                            \
-            }                                                                                                          \
-        }                                                                                                              \
-        return result;                                                                                                 \
-    }
-
-TYPE_LIST(CREATE_INST)
-#undef CREATE_INST
 
 #endif // INST_H

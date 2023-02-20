@@ -33,30 +33,30 @@ TEST(IR_TEST, TEST1) {
 
    Graph g = GRAPH{
         BASIC_BLOCK<1, 2>({
-            INST(1, Opcode::PARAMETER),
-            INST(2, Opcode::CONSTANT, 1),
-            INST(3, Opcode::CONSTANT, 2),
+            INST<Opcode::PARAMETER>(1),
+            INST<Opcode::CONSTANT>(2, 1),
+            INST<Opcode::CONSTANT>(3, 2),
         }),
         BASIC_BLOCK<2, 3>({
-            INST(4, Opcode::MOV, 2),
-            INST(5, Opcode::MOV, 3),
-            INST(6, Opcode::CAST, 1),
+            INST<Opcode::MOV>(4, 2),
+            INST<Opcode::MOV>(5, 3),
+            INST<Opcode::CAST>(6, 1),
         }),
         BASIC_BLOCK<3, 4, 5>({
-            INST(7, Opcode::PHI, 5, 2, 13, 4),
-            INST(8, Opcode::CMP, 7, 6),
-            INST(9, Opcode::JA, 15)
+            INST<Opcode::PHI>(7, 5, 2, 13, 4),
+            INST<Opcode::CMP>(8, 7, 6),
+            INST<Opcode::JA>(9, 15)
         }),
         BASIC_BLOCK<4, 3>({
-            INST(10, Opcode::PHI, 4, 2, 12, 4),
-            INST(11, Opcode::PHI, 5, 2, 13, 4),
-            INST(12, Opcode::MUL, 10, 11),
-            INST(13, Opcode::ADD, 11, 2),
-            INST(14, Opcode::JMP, 7),
+            INST<Opcode::PHI>(10, 4, 2, 12, 4),
+            INST<Opcode::PHI>(11, 5, 2, 13, 4),
+            INST<Opcode::MUL>(12, 10, 11),
+            INST<Opcode::ADD>(13, 11, 2),
+            INST<Opcode::JMP>(14, 7),
         }),
         BASIC_BLOCK<5>({
-            INST(15, Opcode::PHI, 4, 2, 12, 4),
-            INST(16, Opcode::RET, 15),
+            INST<Opcode::PHI>(15, 4, 2, 12, 4),
+            INST<Opcode::RET>(16, 15),
         })
     };
 

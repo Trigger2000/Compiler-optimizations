@@ -1,6 +1,6 @@
 #include "inst.h"
 #include "basic_block.h"
-// #include "basic_block.h"
+#include "graph.h"
 
 void Inst::Dump()
 {
@@ -101,6 +101,17 @@ void InstConstant::Dump()
     Inst::Dump();
     std::cout << constant_ << " -> ";
     users_.Dump();
+    std::cout << "\n";
+}
+
+void InstCall::Dump()
+{
+    Inst::Dump();
+    std::cout << callee_->GetName() << " (";
+    for (auto arg: arguments_) {
+        std::cout << arg->GetInputId() << ", ";
+    }
+    std::cout << ")";
     std::cout << "\n";
 }
 

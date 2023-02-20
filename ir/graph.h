@@ -59,6 +59,7 @@ class Graph : public PassManager, public MarkerManager
     ACCESSOR_MUTATOR(basic_blocks_, BasicBlocks, const std::vector<BasicBlock*>&)
     ACCESSOR_MUTATOR(rpo_basic_blocks_, RPOBasicBlocks, std::vector<BasicBlock*>)
     ACCESSOR_MUTATOR(root_loop_, RootLoop, Loop*)
+    ACCESSOR_MUTATOR(name_, Name, std::string)
 
     void AddBasicBlock(BasicBlock* bb)
     {
@@ -72,6 +73,7 @@ class Graph : public PassManager, public MarkerManager
     void Dump();
 
   private:
+    std::string name_;
     std::vector<BasicBlock*> basic_blocks_;
     std::vector<BasicBlock*> rpo_basic_blocks_;
     Loop* root_loop_ = nullptr;
