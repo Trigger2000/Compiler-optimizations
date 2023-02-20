@@ -39,13 +39,18 @@ void Graph::BuildDFG()
             if (inst->HasTargetInst()) {
                 uint32_t input_id = inst->GetTargetInst()->GetInputId();
                 inst->GetTargetInst()->SetInputInst(GetInstById(input_id));
-                GetInstById(input_id)->GetUsers().AddUser(inst);
             }
             if (inst->HasPhiInputs()) {
                 for (auto phi_input : inst->GetPhiInputs()) {
                     phi_input->SetInputBB(GetBBbyId(phi_input->GetInputBBId()));
                     phi_input->SetInputInst(GetInstById(phi_input->GetInputId()));
                     GetInstById(phi_input->GetInputId())->GetUsers().AddUser(inst);
+                }
+            }
+            if (inst->HasArguments()) {
+                for (auto argument : inst->GetArguments()) {
+                    argument->SetInputInst(GetInstById(argument->GetInputId()));
+                    GetInstById(argument->GetInputId())->GetUsers().AddUser(inst);
                 }
             }
         }

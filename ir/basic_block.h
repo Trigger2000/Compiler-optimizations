@@ -26,6 +26,8 @@ class BasicBlock : public Markers
         assert(inst->GetPrev() == nullptr);
         inst->SetPrev(last_inst_);
         inst->SetBB(this);
+        if (last_inst_ != nullptr)
+            last_inst_->SetNext(inst);
         last_inst_ = inst;
         size_++;
     }
@@ -35,9 +37,41 @@ class BasicBlock : public Markers
         assert(inst->GetNext() == nullptr);
         inst->SetNext(first_inst_);
         inst->SetBB(this);
-        first_inst_->SetPrev(inst);
+        if (first_inst_ != nullptr)
+            first_inst_->SetPrev(inst);
         first_inst_ = inst;
         size_++;
+    }
+
+    // TODO fix pop instructions
+    void PopFrontInst()
+    {
+        delete first_inst_;
+        size_--;
+    }
+
+    void PopBackInst()
+    {
+        delete last_inst_;
+        size_--;
+    }
+
+    void UnbindFrontInst()
+    {
+        first_inst_->GetNext()->SetPrev(nullptr);
+        auto next_first = first_inst_->GetNext();
+        first_inst_->SetNext(nullptr);
+        first_inst_ = next_first;
+        size_--;
+    }
+
+    void UnbindBackInst()
+    {
+        last_inst_->GetPrev()->SetNext(nullptr);
+        auto next_last = last_inst_->GetPrev();
+        last_inst_->SetPrev(nullptr);
+        last_inst_ = next_last;
+        size_--;
     }
 
     // inserts inst before reference_inst
@@ -147,6 +181,10 @@ class BasicBlock : public Markers
         dominators_.push_back(bb);
     }
 
+    static uint32_t NextId()
+    {
+        return next_id_;
+    }
   private:
     BasicBlock() = default;
     BasicBlock(BasicBlock& bb) = default;
@@ -166,6 +204,8 @@ class BasicBlock : public Markers
 
     uint32_t id_ = 0;
     uint32_t size_ = 0;
+    
+    static inline uint32_t next_id_ = 0;
 };
 
 template <uint32_t bb_id, uint32_t... successors>
@@ -175,6 +215,9 @@ BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<Inst*> insts)
 
     result->size_ = insts.size();
     // Bind instructions within basic block
+    if (next_id_ < bb_id)
+        next_id_ = bb_id;
+    next_id_++;
     result->id_ = bb_id;
     if (insts.size() > 0) {
         result->first_inst_ = *(insts.begin());

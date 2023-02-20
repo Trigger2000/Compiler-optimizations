@@ -81,7 +81,7 @@ void InstPhi::Dump()
 {
     Inst::Dump();
     for (auto item : phi_inputs_) {
-        std::cout << "(" << item->GetInputId() << ", " << item->GetInputBBId() << ") ";
+        std::cout << "(" << item->GetInputInst()->GetId() << ", " << item->GetInputBB()->GetId() << ") ";
     }
     std::cout << "-> ";
     users_.Dump();
@@ -108,10 +108,15 @@ void InstCall::Dump()
 {
     Inst::Dump();
     std::cout << callee_->GetName() << " (";
-    for (auto arg: arguments_) {
-        std::cout << arg->GetInputId() << ", ";
+    for (auto arg = arguments_.begin(); arg != std::prev(arguments_.end(), 1); arg = std::next(arg, 1)) {
+        std::cout << (*arg)->GetInputId() << ", ";
     }
-    std::cout << ")";
+    std::cout << (*std::prev(arguments_.end(), 1))->GetInputId() << ")\n";
+}
+
+void InstWithNoInputsUsers::Dump()
+{
+    Inst::Dump();
     std::cout << "\n";
 }
 

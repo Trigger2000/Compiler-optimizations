@@ -1,7 +1,8 @@
-# Compiler-optimizations v5
+# Compiler-optimizations v6
 
 Major changes:  
-    - Added passes with tests: constant folding, peephole, DCE
+    - Added inlining with tests  
+    - Refactored instruction IR
 
 # Build and launch test
 ```

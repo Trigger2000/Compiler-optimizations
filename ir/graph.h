@@ -68,8 +68,12 @@ class Graph : public PassManager, public MarkerManager
         basic_blocks_.push_back(bb);
     }
 
-    void BuildDFG();
+    void Clear()
+    {
+        basic_blocks_.clear();
+    }
 
+    void BuildDFG();
     void Dump();
 
   private:

@@ -13,8 +13,9 @@ class LoopAnalyzer;
 class ConstFolding;
 class DCE;
 class Peephole;
+class Inlining;
 
-using PassList = std::tuple<RPO, DomTreeSlow, DomTreeFast, LoopAnalyzer, ConstFolding, DCE, Peephole>;
+using PassList = std::tuple<RPO, DomTreeSlow, DomTreeFast, LoopAnalyzer, ConstFolding, DCE, Peephole, Inlining>;
 
 class PassManager {
 protected:

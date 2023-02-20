@@ -23,6 +23,7 @@ class BasicBlock;
 class Graph;
 
 // base class for all instructions
+// imho, bad design...
 class Inst : public Markers
 {
   public:
@@ -36,13 +37,15 @@ class Inst : public Markers
     ACCESSOR_MUTATOR(opcode_, Opcode, Opcode)
     ACCESSOR_MUTATOR(type_, Type, Type)
 
-    // TODO change to CRTP
+    // TODO change to something else
     ACCESSOR_MUTATOR_VIRTUAL(input1_, Input1, InstInput*)
     ACCESSOR_MUTATOR_VIRTUAL(input2_, Input2, InstInput*)
     ACCESSOR_MUTATOR_VIRTUAL(target_inst_, TargetInst, JmpInput*)
     ACCESSOR_MUTATOR_VIRTUAL(constant_, Constant, int32_t)
     ACCESSOR_MUTATOR_VIRTUAL(phi_inputs_, PhiInputs, std::vector<PhiInput*>&)
+    ACCESSOR_MUTATOR_VIRTUAL(arguments_, Arguments, std::vector<InstInput*>&)
     ACCESSOR_MUTATOR_VIRTUAL(users_, Users, InstUsers&)
+    ACCESSOR_MUTATOR_VIRTUAL(callee_, Callee, Graph*)
 
     bool IsStartInst();
     bool IsEndInst();
@@ -110,9 +113,12 @@ class InstInput
     {
     }
 
+    InstInput(Inst* input_inst) : input_inst_(input_inst), input_id_(input_inst->GetId())
+    {
+    }
+
     ACCESSOR_MUTATOR(input_id_, InputId, uint32_t)
 
-    // TODO change to CRTP
     virtual void SetInputInst(Inst* input_inst)
     {
         assert(input_inst->GetId() == input_id_);
@@ -148,6 +154,10 @@ class PhiInput : public InstInput
 {
   public:
     PhiInput(uint32_t input_id, uint32_t input_bb_id) : InstInput(input_id), input_bb_id_(input_bb_id)
+    {
+    }
+
+    PhiInput(Inst *input_inst, BasicBlock* input_bb) : InstInput(input_inst), input_bb_(input_bb)
     {
     }
 
@@ -253,6 +263,7 @@ class InstJmp : public Inst
         target_inst_ = new JmpInput(target_inst_id);
     }
 
+    // TODO change input to basic block (incorrect inlining)
     JmpInput* target_inst_ = nullptr;
 };
 
@@ -294,8 +305,12 @@ public:
     {
         return static_cast<Inst*>(new InstCall(id, opcode, inputs_range...));
     }
-    void Dump() override;
 
+    ACCESSOR_MUTATOR_OVERRIDE(callee_, Callee, Graph*)
+    ACCESSOR_MUTATOR_OVERRIDE(arguments_, Arguments, std::vector<InstInput*>&)
+    ACCESSOR_MUTATOR_OVERRIDE(users_, Users, InstUsers&)
+
+    void Dump() override;
 private:
     template <typename... inputs>
     InstCall(uint32_t id, Opcode op, Graph* callee, inputs... inputs_range) : Inst(id, op, Type::InstCall), callee_(callee),
@@ -305,6 +320,7 @@ private:
 
     Graph* callee_;
     std::vector<InstInput*> arguments_;
+    InstUsers users_;
 };
 
 class InstParameter : public Inst
@@ -326,6 +342,23 @@ class InstParameter : public Inst
     }
 
     InstUsers users_;
+};
+
+class InstWithNoInputsUsers : public Inst
+{
+   public:
+    template <Opcode opcode, typename... inputs>
+    static Inst* CreateInst(uint32_t id, inputs... inputs_range)
+    {
+        return static_cast<Inst*>(new InstWithNoInputsUsers(id, opcode, inputs_range...));
+    }
+    
+    void Dump() override;
+
+  private:
+  InstWithNoInputsUsers(uint32_t id, Opcode op) : Inst(id, op, Type::InstWithNoInputsUsers)
+    {
+    }
 };
 
 class InstConstant : public Inst

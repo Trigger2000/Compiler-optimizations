@@ -8,7 +8,8 @@
     FUNC(InstPhi)                                                                                                      \
     FUNC(InstParameter)                                                                                                \
     FUNC(InstConstant)                                                                                                 \
-    FUNC(InstCall)
+    FUNC(InstCall)                                                                                                     \
+    FUNC(InstWithNoInputsUsers)
 
 #define OPCODE_LIST(FUNC)                                                                                              \
     /* Arithmetic */                                                                                                   \
@@ -24,6 +25,9 @@
     FUNC(JMP, InstJmp)                                                                                                 \
     FUNC(JA, InstJmp)                                                                                                  \
     FUNC(RET, InstWithOneInput)                                                                                        \
+    FUNC(RET_VOID, InstWithNoInputsUsers)                                                                              \
+    FUNC(THROW, InstWithNoInputsUsers)                                                                                 \
+    FUNC(CATCH, InstWithNoInputsUsers)                                                                                 \
     FUNC(PARAMETER, InstParameter)                                                                                     \
     FUNC(CALL_STATIC, InstCall)                                                                                        \
     /* Utils */                                                                                                        \
