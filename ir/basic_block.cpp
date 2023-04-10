@@ -1,4 +1,5 @@
 #include "basic_block.h"
+#include "loop.h"
 
 void BasicBlock::BasicBlockDestroyer(BasicBlock* bb)
 {
@@ -31,4 +32,9 @@ void BasicBlock::Dump()
     for (Inst* item = first_inst_; item != nullptr; item = item->GetNext()) {
         item->Dump();
     }
+}
+
+bool BasicBlock::IsLoopHeader()
+{
+    return loop_ != nullptr && loop_->GetHeader() == this;
 }

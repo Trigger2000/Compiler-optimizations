@@ -7,6 +7,7 @@
 #include "marker.h"
 #include "loop.h"
 #include "pass/pass_manager.h"
+#include "live_interval.h"
 
 class Graph : public PassManager, public MarkerManager
 {
@@ -33,6 +34,7 @@ class Graph : public PassManager, public MarkerManager
 
     ACCESSOR_MUTATOR(basic_blocks_, BasicBlocks, const std::vector<BasicBlock*>&)
     ACCESSOR_MUTATOR(rpo_basic_blocks_, RPOBasicBlocks, std::vector<BasicBlock*>)
+    ACCESSOR_MUTATOR(linear_order_, LinearOrder, std::vector<BasicBlock*>)
     ACCESSOR_MUTATOR(root_loop_, RootLoop, Loop*)
 
     void AddBasicBlock(BasicBlock* bb);
@@ -44,6 +46,8 @@ class Graph : public PassManager, public MarkerManager
   private:
     std::vector<BasicBlock*> basic_blocks_;
     std::vector<BasicBlock*> rpo_basic_blocks_;
+    std::vector<BasicBlock*> linear_order_;
+    std::unordered_map<Inst*, LiveInterval> live_intervals_;
     Loop* root_loop_ = nullptr;
 
     std::bitset<std::tuple_size_v<PassList>> pass_validity_;

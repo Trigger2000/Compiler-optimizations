@@ -38,6 +38,8 @@ class Inst : public Markers
     ACCESSOR_MUTATOR(opcode_, Opcode, Opcode)
     ACCESSOR_MUTATOR(type_, Type, Type)
     ACCESSOR_MUTATOR(users_, Users, const std::vector<Inst*>&)
+    ACCESSOR_MUTATOR(linear_number_, LinearNumber, uint32_t)
+    ACCESSOR_MUTATOR(live_number_, LiveNumber, uint32_t)
 
     bool IsStartInst();
     bool IsEndInst();
@@ -94,6 +96,8 @@ class Inst : public Markers
     BasicBlock* bb_ = nullptr;
     Opcode opcode_ = Opcode::DEFAULT;
     Type type_ = Type::DEFAULT;
+    uint32_t linear_number_ = 0;
+    uint32_t live_number_ = 0;
 
     // TODO change to custom list as soon as allocator will be done
     std::vector<Inst*> users_;

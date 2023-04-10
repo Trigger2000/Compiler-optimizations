@@ -85,7 +85,7 @@ void LoopAnalyzer::LoopSearch(Loop *loop, BasicBlock* block)
         if (block->GetLoop() != nullptr && block->GetLoop()->GetOuterLoop() == nullptr) {
             loop->GetInnerLoops().push_back(block->GetLoop());
             block->GetLoop()->SetOuterLoop(loop);
-        } else {
+        } else if (block->GetLoop() == nullptr) {
             block->SetLoop(loop);
         }
         for (auto pred: block->GetPreds()) {
