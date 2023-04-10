@@ -13,7 +13,7 @@ private:
     static void VisitSHR(Inst *inst);
     static void VisitXOR(Inst *inst);
 
-    static bool CheckConstInput(Inst *inst);
+    static bool CheckConstInput(InstWithTwoInputs *inst);
     static void CreateNewConstant(Inst* old_inst, int32_t constant);
 
     #define BUILD_DISPATCH_TABLE(name, type)    \

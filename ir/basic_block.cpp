@@ -20,7 +20,7 @@ void BasicBlock::Dump()
     }
     std::cout << "]\nsuccs [ ";
     for (auto succ : succs_) {
-        std::cout << std::get<BasicBlock*>(succ)->GetId() << " ";
+        std::cout << succ->GetId() << " ";
     }
     std::cout << "]\ndominators [ ";
     for (auto dom : dominators_) {

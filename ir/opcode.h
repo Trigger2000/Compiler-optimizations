@@ -4,12 +4,11 @@
 #define TYPE_LIST(FUNC)                                                                                                \
     FUNC(InstWithTwoInputs)                                                                                            \
     FUNC(InstWithOneInput)                                                                                             \
-    FUNC(InstJmp)                                                                                                      \
+    FUNC(InstWithNoInputs)                                                                                             \
     FUNC(InstPhi)                                                                                                      \
-    FUNC(InstParameter)                                                                                                \
     FUNC(InstConstant)                                                                                                 \
     FUNC(InstCall)                                                                                                     \
-    FUNC(InstWithNoInputsUsers)
+    FUNC(InstJmp)
 
 #define OPCODE_LIST(FUNC)                                                                                              \
     /* Arithmetic */                                                                                                   \
@@ -25,14 +24,14 @@
     FUNC(JMP, InstJmp)                                                                                                 \
     FUNC(JA, InstJmp)                                                                                                  \
     FUNC(RET, InstWithOneInput)                                                                                        \
-    FUNC(RET_VOID, InstWithNoInputsUsers)                                                                              \
-    FUNC(THROW, InstWithNoInputsUsers)                                                                                 \
-    FUNC(CATCH, InstWithNoInputsUsers)                                                                                 \
-    FUNC(PARAMETER, InstParameter)                                                                                     \
+    FUNC(RET_VOID, InstWithNoInputs)                                                                              \
+    FUNC(THROW, InstWithNoInputs)                                                                                 \
+    FUNC(CATCH, InstWithNoInputs)                                                                                 \
+    FUNC(PARAMETER, InstWithNoInputs)                                                                                     \
     FUNC(CALL_STATIC, InstCall)                                                                                        \
     /* Utils */                                                                                                        \
     FUNC(MOV, InstWithOneInput)                                                                                        \
-    FUNC(CMP, InstWithTwoInputs) /* TODO This inst has no users*/                                                      \
+    FUNC(CMP, InstWithTwoInputs)                                                                       \
     FUNC(CAST, InstWithOneInput)                                                                                       \
     FUNC(PHI, InstPhi)                                                                                                 \
     FUNC(CONSTANT, InstConstant)

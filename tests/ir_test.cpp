@@ -1,12 +1,13 @@
 #include "gtest/gtest.h"
 
-#include "ir/graph.h"
+#include "ir/ir_builder.h"
 
-#define INST Inst::InstBuilder
-#define BASIC_BLOCK BasicBlock::BasicBlockBuilder
-#define GRAPH Graph
+#define INST irb.InstBuilder
+#define BASIC_BLOCK irb.BasicBlockBuilder
+#define GRAPH irb.GraphBuilder
 
 TEST(IR_TEST, TEST1) {
+    IrBuilder irb;
     /*
     :1                                          u64 fact(u32 a0)
         1 parameter
@@ -30,8 +31,7 @@ TEST(IR_TEST, TEST1) {
         15 phi         (4, 2) (12, 4)
         16 ret         15                       ret.u64   v0
     */
-
-   Graph g = GRAPH{
+    Graph* g = GRAPH({
         BASIC_BLOCK<1, 2>({
             INST<Opcode::PARAMETER>(1),
             INST<Opcode::CONSTANT>(2, 1),
@@ -58,13 +58,13 @@ TEST(IR_TEST, TEST1) {
             INST<Opcode::PHI>(15, 4, 2, 12, 4),
             INST<Opcode::RET>(16, 15),
         })
-    };
+    });
 
-    BasicBlock *bb1 = g.GetBBbyId(1);
-    BasicBlock *bb2 = g.GetBBbyId(2);
-    BasicBlock *bb3 = g.GetBBbyId(3);
-    BasicBlock *bb4 = g.GetBBbyId(4);
-    BasicBlock *bb5 = g.GetBBbyId(5);
+    BasicBlock *bb1 = g->GetBBbyId(1);
+    BasicBlock *bb2 = g->GetBBbyId(2);
+    BasicBlock *bb3 = g->GetBBbyId(3);
+    BasicBlock *bb4 = g->GetBBbyId(4);
+    BasicBlock *bb5 = g->GetBBbyId(5);
 
     const std::vector <BasicBlock*>& preds1 = bb1->GetPreds();
     const std::vector <BasicBlock*>& preds2 = bb2->GetPreds();
@@ -84,11 +84,11 @@ TEST(IR_TEST, TEST1) {
     assert(preds4[0] == bb3);
     assert(preds5[0] == bb3);
 
-    const std::vector<std::variant<uint32_t, BasicBlock*>>& succs1 = bb1->GetSuccs();
-    const std::vector<std::variant<uint32_t, BasicBlock*>>& succs2 = bb2->GetSuccs();
-    const std::vector<std::variant<uint32_t, BasicBlock*>>& succs3 = bb3->GetSuccs();
-    const std::vector<std::variant<uint32_t, BasicBlock*>>& succs4 = bb4->GetSuccs();
-    const std::vector<std::variant<uint32_t, BasicBlock*>>& succs5 = bb5->GetSuccs();
+    const std::vector<BasicBlock*>& succs1 = bb1->GetSuccs();
+    const std::vector<BasicBlock*>& succs2 = bb2->GetSuccs();
+    const std::vector<BasicBlock*>& succs3 = bb3->GetSuccs();
+    const std::vector<BasicBlock*>& succs4 = bb4->GetSuccs();
+    const std::vector<BasicBlock*>& succs5 = bb5->GetSuccs();
 
     assert(succs1.size() == 1);
     assert(succs2.size() == 1);
@@ -114,7 +114,7 @@ TEST(IR_TEST, TEST1) {
     assert(bb1inst2->GetOpcode() == Opcode::CONSTANT);
     assert(bb1inst3->GetOpcode() == Opcode::CONSTANT);
 
-    assert(bb1inst1->GetType() == Type::InstParameter);
+    assert(bb1inst1->GetType() == Type::InstWithNoInputs);
     assert(bb1inst2->GetType() == Type::InstConstant);
     assert(bb1inst3->GetType() == Type::InstConstant);
 

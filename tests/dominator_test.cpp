@@ -2,10 +2,11 @@
 
 #include "pass/dom_tree_slow.h"
 #include "pass/dom_tree_fast.h"
+#include "ir/ir_builder.h"
 
-#define INST Inst::InstBuilder
-#define BASIC_BLOCK BasicBlock::BasicBlockBuilder
-#define GRAPH Graph
+#define INST irb.InstBuilder
+#define BASIC_BLOCK irb.BasicBlockBuilder
+#define GRAPH irb.GraphBuilder
 
 void check_dominators(BasicBlock* bb, std::vector<uint32_t> expect_doms)
 {
@@ -20,7 +21,8 @@ void check_dominators(BasicBlock* bb, std::vector<uint32_t> expect_doms)
 
 // test case from https://llvm.org/devmtg/2017-10/slides/Kuderski-Dominator_Trees.pdf
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_LLVM) {
-    Graph g = GRAPH{
+    IrBuilder irb;
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 5>({}),
         BASIC_BLOCK<2, 3, 4>({}),
@@ -30,10 +32,10 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_LLVM) {
         BASIC_BLOCK<6, 7>({}),
         BASIC_BLOCK<7, 5, 8>({}),
         BASIC_BLOCK<8>({})
-    };
+    });
 
-    g.RunPass<DomTreeSlow>();
-    auto bbs = g.GetBasicBlocks();
+    g->RunPass<DomTreeSlow>();
+    auto bbs = g->GetBasicBlocks();
 
     check_dominators(bbs[0], {0});
     check_dominators(bbs[1], {0, 1});
@@ -48,7 +50,8 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_LLVM) {
 
 // test case from https://www.cs.princeton.edu/courses/archive/fall03/cs528/handouts/a%20fast%20algorithm%20for%20finding.pdf
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_ARTICLE) {
-    Graph g = GRAPH{
+    IrBuilder irb;
+    Graph *g = GRAPH({
         BASIC_BLOCK<1, 2, 3, 7>({}),
         BASIC_BLOCK<2, 4, 5>({}),
         BASIC_BLOCK<3, 6, 7, 11>({}),
@@ -62,13 +65,14 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_ARTICLE) {
         BASIC_BLOCK<11, 13>({}),
         BASIC_BLOCK<12, 8, 1>({}),
         BASIC_BLOCK<13, 10>({})
-    };
+    });
 
-    g.RunPass<DomTreeFast>();
+    g->RunPass<DomTreeFast>();
 }
 
 // test case 1 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_1) {
+    IrBuilder irb;
     /*
                 0
                 |
@@ -81,7 +85,7 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_1) {
             |   v   v
             |-->3<--6
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 5>({}),
         BASIC_BLOCK<2, 3>({}),
@@ -89,10 +93,10 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_1) {
         BASIC_BLOCK<4, 3>({}),
         BASIC_BLOCK<5, 4, 6>({}),
         BASIC_BLOCK<6, 3>({}),
-    };
+    });
 
-    g.RunPass<DomTreeSlow>();
-    auto bbs = g.GetBasicBlocks();
+    g->RunPass<DomTreeSlow>();
+    auto bbs = g->GetBasicBlocks();
 
     check_dominators(bbs[0], {0});
     check_dominators(bbs[1], {0, 1});
@@ -105,6 +109,7 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_1) {
 
 // test case 2 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_2) {
+    IrBuilder irb;
     /*
                 0
                 |
@@ -126,7 +131,7 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_2) {
            |    v
            7<---6--->8--->10
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 9>({}),
         BASIC_BLOCK<2, 3>({}),
@@ -138,10 +143,10 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_2) {
         BASIC_BLOCK<8, 10>({}),
         BASIC_BLOCK<9, 2>({}),
         BASIC_BLOCK<10>({})
-    };
+    });
 
-    g.RunPass<DomTreeSlow>();
-    auto bbs = g.GetBasicBlocks();
+    g->RunPass<DomTreeSlow>();
+    auto bbs = g->GetBasicBlocks();
 
     check_dominators(bbs[0], {0});
     check_dominators(bbs[1], {0, 1});
@@ -158,7 +163,8 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_2) {
 
 // test case 3 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_3) {
-    Graph g = GRAPH{
+    IrBuilder irb;
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 4>({}),
         BASIC_BLOCK<2, 3>({}),
@@ -168,10 +174,10 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_3) {
         BASIC_BLOCK<6, 2, 8>({}),
         BASIC_BLOCK<7, 6, 8>({}),
         BASIC_BLOCK<8>({})
-    };
+    });
 
-    g.RunPass<DomTreeSlow>();
-    auto bbs = g.GetBasicBlocks();
+    g->RunPass<DomTreeSlow>();
+    auto bbs = g->GetBasicBlocks();
 
     check_dominators(bbs[0], {0});
     check_dominators(bbs[1], {0, 1});
@@ -186,6 +192,7 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_SLOW_3) {
 
 // test case 1 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_1) {
+    IrBuilder irb;
     /*
                 0
                 |
@@ -198,7 +205,7 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_1) {
             |   v   v
             |-->3<--6
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 5>({}),
         BASIC_BLOCK<2, 3>({}),
@@ -206,10 +213,10 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_1) {
         BASIC_BLOCK<4, 3>({}),
         BASIC_BLOCK<5, 4, 6>({}),
         BASIC_BLOCK<6, 3>({}),
-    };
+    });
 
-    g.RunPass<DomTreeFast>();
-    auto bbs = g.GetBasicBlocks();
+    g->RunPass<DomTreeFast>();
+    auto bbs = g->GetBasicBlocks();
 
     ASSERT_EQ(bbs[0]->GetIDom(), nullptr);
     ASSERT_EQ(bbs[1]->GetIDom(), bbs[0]);
@@ -222,6 +229,7 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_1) {
 
 // test case 2 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_2) {
+    IrBuilder irb;
     /*
                 0
                 |
@@ -243,7 +251,7 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_2) {
            |    v
            7<---6--->8--->10
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 9>({}),
         BASIC_BLOCK<2, 3>({}),
@@ -255,10 +263,10 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_2) {
         BASIC_BLOCK<8, 10>({}),
         BASIC_BLOCK<9, 2>({}),
         BASIC_BLOCK<10>({})
-    };
+    });
 
-    g.RunPass<DomTreeFast>();
-    auto bbs = g.GetBasicBlocks();
+    g->RunPass<DomTreeFast>();
+    auto bbs = g->GetBasicBlocks();
 
     ASSERT_EQ(bbs[0]->GetIDom(), nullptr);
     ASSERT_EQ(bbs[1]->GetIDom(), bbs[0]);
@@ -275,7 +283,8 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_2) {
 
 // test case 3 from lecture
 TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_3) {
-    Graph g = GRAPH{
+    IrBuilder irb;
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 4>({}),
         BASIC_BLOCK<2, 3>({}),
@@ -285,10 +294,10 @@ TEST(DOMINATOR_TEST, DOMINATOR_TEST_FAST_3) {
         BASIC_BLOCK<6, 2, 8>({}),
         BASIC_BLOCK<7, 6, 8>({}),
         BASIC_BLOCK<8>({})
-    };
+    });
 
-    g.RunPass<DomTreeFast>();
-    auto bbs = g.GetBasicBlocks();
+    g->RunPass<DomTreeFast>();
+    auto bbs = g->GetBasicBlocks();
 
     ASSERT_EQ(bbs[0]->GetIDom(), nullptr);
     ASSERT_EQ(bbs[1]->GetIDom(), bbs[0]);

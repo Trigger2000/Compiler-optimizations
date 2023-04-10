@@ -17,7 +17,7 @@ void Inlining::RunPassImpl(Graph* g)
 
 void Inlining::InlineStaticMethod(Inst* call_inst)
 {
-    Graph* callee = call_inst->GetCallee();
+    Graph* callee = call_inst->CastToInstCall()->GetCallee();
 
     SubstituteUsersInputsForArgs(callee, call_inst);
 
@@ -34,12 +34,12 @@ void Inlining::InlineStaticMethod(Inst* call_inst)
 void Inlining::SubstituteUsersInputsForArgs(Graph* callee, Inst* call_inst)
 {
     // substitute users and inputs for arguments
-    for (auto arg: call_inst->GetArguments()) {
+    for (auto arg: call_inst->CastToInstCall()->GetArguments()) {
         Inst* callee_param = callee->GetBasicBlocks()[0]->GetFirstInst();
-        arg->GetInputInst()->GetUsers().RemoveUser(call_inst);
-        for (auto callee_param_user: callee_param->GetUsers().GetUsers()) {
-            arg->GetInputInst()->GetUsers().AddUser(callee_param_user);
-            callee_param_user->SubstituteInput(callee_param, arg->GetInputInst());
+        arg->RemoveUser(call_inst);
+        for (auto callee_param_user: callee_param->GetUsers()) {
+            arg->AddUser(callee_param_user);
+            callee_param_user->SubstituteInput(callee_param, arg);
         }
         callee->GetBasicBlocks()[0]->PopFrontInst();
     }
@@ -66,8 +66,9 @@ std::vector<BasicBlock*> Inlining::ProcessReturns(Graph* callee, Inst* call_inst
             call_result_inst = Inst::InstBuilder<Opcode::PHI>(Inst::NextId());
             for (auto ret_inst: returns) {
                 if (ret_inst->GetOpcode() != Opcode::THROW) {
-                    call_result_inst->GetPhiInputs().push_back(new PhiInput(ret_inst->GetInput1()->GetInputInst(), ret_inst->GetInput1()->GetInputInst()->GetBB()));
-                    ret_inst->GetInput1()->GetInputInst()->GetUsers().AddUser(call_result_inst);
+                    auto ret_inst_casted = ret_inst->CastToInstWithOneInput();
+                    call_result_inst->CastToInstPhi()->AddInput(ret_inst_casted->GetInput1(), ret_inst_casted->GetInput1()->GetBB());
+                    ret_inst_casted->GetInput1()->AddUser(call_result_inst);
                 }
             }
             if (call_inst->IsEndInst()) {
@@ -76,10 +77,10 @@ std::vector<BasicBlock*> Inlining::ProcessReturns(Graph* callee, Inst* call_inst
                 caller_inst_bb->InsertInst(call_inst->GetNext(), call_result_inst);
             }
         } else {
-            call_result_inst = returns[0]->GetInput1()->GetInputInst();
+            call_result_inst = returns[0]->CastToInstWithOneInput()->GetInput1();
         }
-        for (auto user: call_inst->GetUsers().GetUsers()) {
-            call_result_inst->GetUsers().AddUser(user);
+        for (auto user: call_inst->GetUsers()) {
+            call_result_inst->AddUser(user);
             user->SubstituteInput(call_inst, call_result_inst);
         }
     }
@@ -89,7 +90,7 @@ std::vector<BasicBlock*> Inlining::ProcessReturns(Graph* callee, Inst* call_inst
         if (bb_callee->GetLastInst()->GetOpcode() == Opcode::RET ||
             bb_callee->GetLastInst()->GetOpcode() == Opcode::RET_VOID) {
             if (bb_callee->GetLastInst()->GetOpcode() == Opcode::RET) {
-                bb_callee->GetLastInst()->GetInput1()->GetInputInst()->GetUsers().RemoveUser(bb_callee->GetLastInst());
+                bb_callee->GetLastInst()->CastToInstWithOneInput()->GetInput1()->RemoveUser(bb_callee->GetLastInst());
             }
             bb_callee->PopBackInst();
             callee_ret_bbs.push_back(bb_callee);
@@ -122,8 +123,7 @@ void Inlining::SplitMoveAndConnectBlocks(Graph* callee, Inst* call_inst, const s
 {
     BasicBlock* caller_inst_bb = call_inst->GetBB();
     // split block with call instruction
-    BasicBlock* call_cont_block = BasicBlock::BasicBlockBuilder<0>({});
-    call_cont_block->SetId(BasicBlock::NextId());
+    BasicBlock* call_cont_block = new BasicBlock(BasicBlock::NextId());
     // move all instructions after call inst to call_cont_block
     while(caller_inst_bb->GetLastInst() != call_inst) {
         call_cont_block->PushFrontInst(caller_inst_bb->GetLastInst());
@@ -139,10 +139,10 @@ void Inlining::SplitMoveAndConnectBlocks(Graph* callee, Inst* call_inst, const s
 
     // connect blocks
     for (auto call_block_succ: caller_inst_bb->GetSuccs()) {
-        call_cont_block->AddSucc(std::get<BasicBlock*>(call_block_succ));
-        std::get<BasicBlock*>(call_block_succ)->RemovePred(caller_inst_bb);
-        std::get<BasicBlock*>(call_block_succ)->AddPred(call_cont_block);
-        caller_inst_bb->RemoveSucc(std::get<BasicBlock*>(call_block_succ));
+        call_cont_block->AddSucc(call_block_succ);
+        call_block_succ->RemovePred(caller_inst_bb);
+        call_block_succ->AddPred(call_cont_block);
+        caller_inst_bb->RemoveSucc(call_block_succ);
     }
     caller_inst_bb->AddSucc(callee->GetBasicBlocks()[0]);
     callee->GetBasicBlocks()[0]->AddPred(caller_inst_bb);

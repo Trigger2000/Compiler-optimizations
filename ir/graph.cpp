@@ -2,61 +2,6 @@
 
 #include "graph.h"
 
-Graph::Graph(std::initializer_list<BasicBlock*> bbs) : basic_blocks_(bbs)
-{
-    // TODO Maybe not efficient? O(N^2), N - number of bbs
-    for (auto curr_bb : basic_blocks_) {
-        for (auto bb : basic_blocks_) {
-            if (bb->HasSucc(curr_bb)) {
-                curr_bb->AddPred(bb);
-            }
-            if (curr_bb->HasSucc(bb)) {
-                curr_bb->AddSucc(bb);
-            }
-        }
-        curr_bb->SetGraph(this);
-    }
-
-    BuildDFG();
-}
-
-// bad complexity?.. O(N^2), N - number of instructions in graph
-void Graph::BuildDFG()
-{
-    for (auto bb: basic_blocks_) {
-        for (auto inst = bb->GetFirstInst(); inst != nullptr; inst = inst->GetNext()) {
-            // bind inputs and assign users
-            if (inst->HasInput1()) {
-                uint32_t input_id = inst->GetInput1()->GetInputId();
-                inst->GetInput1()->SetInputInst(GetInstById(input_id));
-                GetInstById(input_id)->GetUsers().AddUser(inst);
-            }
-            if (inst->HasInput2()) {
-                uint32_t input_id = inst->GetInput2()->GetInputId();
-                inst->GetInput2()->SetInputInst(GetInstById(input_id));
-                GetInstById(input_id)->GetUsers().AddUser(inst);
-            }
-            if (inst->HasTargetInst()) {
-                uint32_t input_id = inst->GetTargetInst()->GetInputId();
-                inst->GetTargetInst()->SetInputInst(GetInstById(input_id));
-            }
-            if (inst->HasPhiInputs()) {
-                for (auto phi_input : inst->GetPhiInputs()) {
-                    phi_input->SetInputBB(GetBBbyId(phi_input->GetInputBBId()));
-                    phi_input->SetInputInst(GetInstById(phi_input->GetInputId()));
-                    GetInstById(phi_input->GetInputId())->GetUsers().AddUser(inst);
-                }
-            }
-            if (inst->HasArguments()) {
-                for (auto argument : inst->GetArguments()) {
-                    argument->SetInputInst(GetInstById(argument->GetInputId()));
-                    GetInstById(argument->GetInputId())->GetUsers().AddUser(inst);
-                }
-            }
-        }
-    }
-}
-
 void Graph::Dump()
 {
     for (auto item : basic_blocks_) {
@@ -84,4 +29,41 @@ Inst* Graph::GetInstById(uint32_t id)
         }
     }
     return result;
+}
+
+Graph::~Graph()
+{
+    delete root_loop_;
+}
+
+void Graph::GraphDestroyer(Graph *g)
+{
+    for (auto item : g->basic_blocks_) {
+        BasicBlock::BasicBlockDestroyer(item);
+    }
+    delete g->root_loop_;
+    delete g;
+}
+
+bool Graph::CheckDominance(BasicBlock *prob_dominator, BasicBlock *prob_dominated)
+{
+    BasicBlock* idom = prob_dominated->GetIDom();
+    while (idom != nullptr) {
+        if (idom == prob_dominator)
+            return true;
+        idom = idom->GetIDom();
+    }
+    return false;
+}
+
+void Graph::AddBasicBlock(BasicBlock* bb)
+{
+    assert(bb->GetGraph() == nullptr);
+    bb->SetGraph(this);
+    basic_blocks_.push_back(bb);
+}
+
+void Graph::Clear()
+{
+    basic_blocks_.clear();
 }

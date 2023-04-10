@@ -1,62 +1,67 @@
 #include "gtest/gtest.h"
 
+#include "ir/ir_builder.h"
 #include "pass/const_folding.h"
 
-#define INST Inst::InstBuilder
-#define BASIC_BLOCK BasicBlock::BasicBlockBuilder
-#define GRAPH Graph
+#define INST irb.InstBuilder
+#define BASIC_BLOCK irb.BasicBlockBuilder
+#define GRAPH irb.GraphBuilder
 
 // res = 8 - 2
 TEST(CONST_FOLDING_TEST, TEST1) {
-    Graph g = GRAPH{
+    IrBuilder irb;
+    Graph* g = GRAPH({
         BASIC_BLOCK<1>({
             INST<Opcode::CONSTANT>(1, 2),
             INST<Opcode::CONSTANT>(2, 8),
             INST<Opcode::SUB>(3, 2, 1),
         }),
-    };
-    g.RunPass<ConstFolding>();
-    auto bb = g.GetBasicBlocks()[0];
+    });
+    g->RunPass<ConstFolding>();
+    auto bb = g->GetBasicBlocks()[0];
     ASSERT_EQ(bb->GetSize(), 1);
     ASSERT_EQ(bb->GetFirstInst()->GetOpcode(), Opcode::CONSTANT);
-    ASSERT_EQ(bb->GetFirstInst()->GetConstant(), 6);
+    ASSERT_EQ(bb->GetFirstInst()->CastToInstConstant()->GetConstant(), 6);
 }
 
 // res = 8 >> 2
 TEST(CONST_FOLDING_TEST, TEST2) {
-    Graph g = GRAPH{
+    IrBuilder irb;
+    Graph *g = GRAPH({
         BASIC_BLOCK<1>({
             INST<Opcode::CONSTANT>(1, 2),
             INST<Opcode::CONSTANT>(2, 8),
             INST<Opcode::SHR>(3, 2, 1),
         }),
-    };
-    g.RunPass<ConstFolding>();
-    auto bb = g.GetBasicBlocks()[0];
+    });
+    g->RunPass<ConstFolding>();
+    auto bb = g->GetBasicBlocks()[0];
     ASSERT_EQ(bb->GetSize(), 1);
     ASSERT_EQ(bb->GetFirstInst()->GetOpcode(), Opcode::CONSTANT);
-    ASSERT_EQ(bb->GetFirstInst()->GetConstant(), 2);
+    ASSERT_EQ(bb->GetFirstInst()->CastToInstConstant()->GetConstant(), 2);
 }
 
 // res = 8 ^ 2
 TEST(CONST_FOLDING_TEST, TEST3) {
-    Graph g = GRAPH{
+    IrBuilder irb;
+    Graph *g = GRAPH({
         BASIC_BLOCK<1>({
             INST<Opcode::CONSTANT>(1, 2),
             INST<Opcode::CONSTANT>(2, 8),
             INST<Opcode::XOR>(3, 2, 1),
         }),
-    };
-    g.RunPass<ConstFolding>();
-    auto bb = g.GetBasicBlocks()[0];
+    });
+    g->RunPass<ConstFolding>();
+    auto bb = g->GetBasicBlocks()[0];
     ASSERT_EQ(bb->GetSize(), 1);
     ASSERT_EQ(bb->GetFirstInst()->GetOpcode(), Opcode::CONSTANT);
-    ASSERT_EQ(bb->GetFirstInst()->GetConstant(), 10);
+    ASSERT_EQ(bb->GetFirstInst()->CastToInstConstant()->GetConstant(), 10);
 }
 
 // res = (100 - 64 >> 3) ^ 20
 TEST(CONST_FOLDING_TEST, TEST4) {
-    Graph g = GRAPH{
+    IrBuilder irb;
+    Graph *g = GRAPH({
         BASIC_BLOCK<1>({
             INST<Opcode::CONSTANT>(1, 100),
             INST<Opcode::CONSTANT>(2, 64),
@@ -66,12 +71,12 @@ TEST(CONST_FOLDING_TEST, TEST4) {
             INST<Opcode::SUB>(6, 1, 5),
             INST<Opcode::XOR>(7, 6, 4),
         }),
-    };
+    });
 
-    g.RunPass<ConstFolding>();
+    g->RunPass<ConstFolding>();
 
-    auto bb = g.GetBasicBlocks()[0];
+    auto bb = g->GetBasicBlocks()[0];
     ASSERT_EQ(bb->GetSize(), 1);
     ASSERT_EQ(bb->GetFirstInst()->GetOpcode(), Opcode::CONSTANT);
-    ASSERT_EQ(bb->GetFirstInst()->GetConstant(), 72);
+    ASSERT_EQ(bb->GetFirstInst()->CastToInstConstant()->GetConstant(), 72);
 }

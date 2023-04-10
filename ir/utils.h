@@ -12,41 +12,13 @@
     } while (0);
 
 #define ACCESSOR_MUTATOR(field_name, accessor_name, type)                                                              \
-    type Get##accessor_name()                                                                                          \
+    type Get##accessor_name()                                   \
     {                                                                                                                  \
         return field_name;                                                                                             \
     }                                                                                                                  \
     void Set##accessor_name(type accessor_name)                                                                        \
     {                                                                                                                  \
         field_name = accessor_name;                                                                                    \
-    }
-
-#define ACCESSOR_MUTATOR_VIRTUAL(field_name, accessor_name, type)                                                      \
-    virtual type Get##accessor_name()                                                                                  \
-    {                                                                                                                  \
-        throw_error("No field named ##field_name");                                                                    \
-    }                                                                                                                  \
-    virtual void Set##accessor_name(type accessor_name)                                                                \
-    {                                                                                                                  \
-        throw_error("No field named ##field_name");                                                                    \
-    }                                                                                                                  \
-    virtual bool Has##accessor_name()                                                                                  \
-    {                                                                                                                  \
-        return false;                                                                                                  \
-    }
-
-#define ACCESSOR_MUTATOR_OVERRIDE(field_name, accessor_name, type)                                                     \
-    type Get##accessor_name() override                                                                                 \
-    {                                                                                                                  \
-        return field_name;                                                                                             \
-    }                                                                                                                  \
-    void Set##accessor_name(type accessor_name) override                                                               \
-    {                                                                                                                  \
-        field_name = accessor_name;                                                                                    \
-    }                                                                                                                  \
-    bool Has##accessor_name() override                                                                                 \
-    {                                                                                                                  \
-        return true;                                                                                                   \
     }
 
 void throw_inst_error(const std::string& msg, Opcode op_in);

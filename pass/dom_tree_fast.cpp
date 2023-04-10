@@ -87,7 +87,7 @@ void DomTreeFast::PreOrderVisitor(std::vector<HelperNode*>& result_vector, Basic
     bb_to_dfs_num[current] = helper_node;
     result_vector.push_back(helper_node);
     for (auto succ: current->GetSuccs()) {
-        PreOrderVisitor(result_vector, std::get<BasicBlock*>(succ), helper_node, visited_marker);
+        PreOrderVisitor(result_vector, succ, helper_node, visited_marker);
     }
 }
 
@@ -104,7 +104,7 @@ std::vector<DomTreeFast::HelperNode*> DomTreeFast::GetPreOrder(Graph *g)
     bb_to_dfs_num[basic_blocks[0]] = helper_node;
     result_vector.push_back(helper_node);
     for (auto succ: basic_blocks[0]->GetSuccs()) {
-        PreOrderVisitor(result_vector, std::get<BasicBlock*>(succ), helper_node, visited_marker);
+        PreOrderVisitor(result_vector, succ, helper_node, visited_marker);
     }
     g->EraseMarker(visited_marker);
     return result_vector;

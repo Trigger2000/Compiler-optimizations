@@ -10,7 +10,7 @@ void RPO::RunPassImpl(Graph *g)
     basic_blocks_[0]->SetMarker(visited_marker);
 
     for (auto succ: basic_blocks_[0]->GetSuccs()) {
-        PostOrderVisitor(result, std::get<BasicBlock*>(succ), visited_marker);
+        PostOrderVisitor(result, succ, visited_marker);
     }
     result.push_back(basic_blocks_[0]);
 
@@ -27,7 +27,7 @@ void RPO::PostOrderVisitor(std::vector<BasicBlock*>& result, BasicBlock* current
     }
     current->SetMarker(visited_marker);
     for (auto succ: current->GetSuccs()) {
-        PostOrderVisitor(result, std::get<BasicBlock*>(succ), visited_marker);
+        PostOrderVisitor(result, succ, visited_marker);
     }
     result.push_back(current);
 }

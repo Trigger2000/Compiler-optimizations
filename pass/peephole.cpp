@@ -19,8 +19,8 @@ void Peephole::RunPassImpl(Graph* g)
 
 void Peephole::ProcessUsersInputs(Inst *old_inst, Inst *new_inst)
 {
-    for (auto user : old_inst->GetUsers().GetUsers()) {
-        new_inst->GetUsers().AddUser(user);
+    for (auto user : old_inst->GetUsers()) {
+        new_inst->AddUser(user);
         user->SubstituteInput(old_inst, new_inst);
     }
 }
@@ -28,14 +28,15 @@ void Peephole::ProcessUsersInputs(Inst *old_inst, Inst *new_inst)
 void Peephole::VisitSUB(Inst* inst)
 {
     assert(inst->GetOpcode() == Opcode::SUB);
+    auto inst_casted = inst->CastToInstWithTwoInputs();
 
     // case 1
     // 1 sub v0 0
     // ----------
     // users(v1) = users(v0)
-    if (inst->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT &&
-        inst->GetInput2()->GetInputInst()->GetConstant() == 0) {
-        auto input1 = inst->GetInput1()->GetInputInst();
+    if (inst_casted->GetInput2()->GetOpcode() == Opcode::CONSTANT &&
+        inst_casted->GetInput2()->CastToInstConstant()->GetConstant() == 0) {
+        auto input1 = inst_casted->GetInput1();
         ProcessUsersInputs(inst, input1);
         inst->SetBB(nullptr);
     }
@@ -45,8 +46,9 @@ void Peephole::VisitSUB(Inst* inst)
     // -----------
     // 2 constant 0
     // users(v1) = users(v2)
-    if (inst->GetInput1()->GetInputInst() == inst->GetInput2()->GetInputInst()) {
-        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId(), 0);
+    if (inst_casted->GetInput1() == inst_casted->GetInput2()) {
+        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId());
+        new_inst->CastToInstConstant()->SetConstant(0);
         inst->GetBB()->PushFrontInst(new_inst);
         ProcessUsersInputs(inst, new_inst);
         inst->SetBB(nullptr);
@@ -58,10 +60,10 @@ void Peephole::VisitSUB(Inst* inst)
     // -----------
     // 2 add v0 v1
     // users(v3) = users(v0) 
-    if (inst->GetInput1()->GetInputInst() == inst->GetPrev() &&
+    if (inst_casted->GetInput1() == inst->GetPrev() &&
         inst->GetPrev()->GetOpcode() == Opcode::ADD &&
-        inst->GetPrev()->GetInput2()->GetInputInst() == inst->GetInput2()->GetInputInst()) {
-        auto input1_prev = inst->GetPrev()->GetInput1()->GetInputInst();
+        inst->GetPrev()->CastToInstWithTwoInputs()->GetInput2() == inst_casted->GetInput2()) {
+        auto input1_prev = inst->GetPrev()->CastToInstWithTwoInputs()->GetInput1();
         ProcessUsersInputs(inst, input1_prev);
         inst->SetBB(nullptr);
     }
@@ -72,10 +74,10 @@ void Peephole::VisitSUB(Inst* inst)
     // ------------
     // 2. sub v1 v0
     // users(v3) = users(v0)
-    if (inst->GetInput2()->GetInputInst() == inst->GetPrev() &&
+    if (inst_casted->GetInput2() == inst->GetPrev() &&
         inst->GetPrev()->GetOpcode() == Opcode::SUB &&
-        inst->GetPrev()->GetInput1()->GetInputInst() == inst->GetPrev()->GetInput1()->GetInputInst()) {
-        auto input2_prev = inst->GetPrev()->GetInput2()->GetInputInst();
+        inst->GetPrev()->CastToInstWithTwoInputs()->GetInput1() == inst_casted->GetInput1()) {
+        auto input2_prev = inst->GetPrev()->CastToInstWithTwoInputs()->GetInput2();
         ProcessUsersInputs(inst, input2_prev);
         inst->SetBB(nullptr);
     }
@@ -87,40 +89,42 @@ void Peephole::VisitSUB(Inst* inst)
     // const3 = const1 + const2
     // 2. sub v1 const1
     // 3. sub v1 const3
-    if (inst->GetInput1()->GetInputInst() == inst->GetPrev() &&
+    if (inst_casted->GetInput1() == inst->GetPrev() &&
         inst->GetPrev()->GetOpcode() == Opcode::SUB &&
-        inst->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT &&
-        inst->GetPrev()->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT) {
-        int32_t new_const = inst->GetInput2()->GetInputInst()->GetConstant() +
-                            inst->GetPrev()->GetInput2()->GetInputInst()->GetConstant();
-        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId(), new_const);
+        inst_casted->GetInput2()->GetOpcode() == Opcode::CONSTANT &&
+        inst->GetPrev()->CastToInstWithTwoInputs()->GetInput2()->GetOpcode() == Opcode::CONSTANT) {
+        int32_t new_const = inst_casted->GetInput2()->CastToInstConstant()->GetConstant() +
+                            inst->GetPrev()->CastToInstWithTwoInputs()->GetInput2()->CastToInstConstant()->GetConstant();
+        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId());
+        new_inst->CastToInstConstant()->SetConstant(new_const);
         inst->GetBB()->PushFrontInst(new_inst);
-        new_inst->GetUsers().AddUser(inst);
+        new_inst->AddUser(inst);
 
-        inst->GetInput2()->GetInputInst()->GetUsers().RemoveUser(inst);
-        if (inst->GetInput2()->GetInputInst()->GetUsers().GetUsers().size() == 0)
-            inst->GetInput2()->GetInputInst()->SetBB(nullptr);
+        inst_casted->GetInput2()->RemoveUser(inst);
+        if (inst_casted->GetInput2()->GetUsers().size() == 0)
+            inst_casted->GetInput2()->SetBB(nullptr);
 
-        inst->GetInput1()->GetInputInst()->GetUsers().RemoveUser(inst);
-        if (inst->GetInput1()->GetInputInst()->GetUsers().GetUsers().size() == 0)
-            inst->GetInput1()->GetInputInst()->SetBB(nullptr);
+        inst_casted->GetInput1()->RemoveUser(inst);
+        if (inst_casted->GetInput1()->GetUsers().size() == 0)
+            inst_casted->GetInput1()->SetBB(nullptr);
 
-        inst->SubstituteInput(inst->GetInput2()->GetInputInst(), new_inst);
-        inst->SubstituteInput(inst->GetInput1()->GetInputInst(), inst->GetPrev()->GetInput1()->GetInputInst());
+        inst->SubstituteInput(inst_casted->GetInput2(), new_inst);
+        inst->SubstituteInput(inst_casted->GetInput1(), inst->GetPrev()->CastToInstWithTwoInputs()->GetInput1());
     }
 }
 
 void Peephole::VisitSHR(Inst* inst)
 {
     assert(inst->GetOpcode() == Opcode::SHR);
+    auto inst_casted = inst->CastToInstWithTwoInputs();
 
     // case 1
     // 1 shr v0 0
     // ----------
     // users(v1) = users(v0)
-    if (inst->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT &&
-        inst->GetInput2()->GetInputInst()->GetConstant() == 0) {
-        auto input1 = inst->GetInput1()->GetInputInst();
+    if (inst_casted->GetInput2()->GetOpcode() == Opcode::CONSTANT &&
+        inst_casted->GetInput2()->CastToInstConstant()->GetConstant() == 0) {
+        auto input1 = inst_casted->GetInput1();
         ProcessUsersInputs(inst, input1);
         inst->SetBB(nullptr);
     }
@@ -131,10 +135,10 @@ void Peephole::VisitSHR(Inst* inst)
     // -----------
     // 2 shl v0 v1
     // users(v3) = users(v0) 
-    if (inst->GetInput1()->GetInputInst() == inst->GetPrev() &&
+    if (inst_casted->GetInput1() == inst->GetPrev() &&
         inst->GetPrev()->GetOpcode() == Opcode::SHL &&
-        inst->GetPrev()->GetInput2()->GetInputInst() == inst->GetInput2()->GetInputInst()) {
-        auto input1_prev = inst->GetPrev()->GetInput1()->GetInputInst();
+        inst->GetPrev()->CastToInstWithTwoInputs()->GetInput2() == inst_casted->GetInput2()) {
+        auto input1_prev = inst->GetPrev()->CastToInstWithTwoInputs()->GetInput1();
         ProcessUsersInputs(inst, input1_prev);
         inst->SetBB(nullptr);
     }
@@ -146,40 +150,42 @@ void Peephole::VisitSHR(Inst* inst)
     // const3 = const1 + const2
     // 2. shr v1 const1
     // 3. shr v1 const3
-    if (inst->GetInput1()->GetInputInst() == inst->GetPrev() &&
+    if (inst_casted->GetInput1() == inst->GetPrev() &&
         inst->GetPrev()->GetOpcode() == Opcode::SHR &&
-        inst->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT &&
-        inst->GetPrev()->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT) {
-        int32_t new_const = inst->GetInput2()->GetInputInst()->GetConstant() +
-                            inst->GetPrev()->GetInput2()->GetInputInst()->GetConstant();
-        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId(), new_const);
+        inst_casted->GetInput2()->GetOpcode() == Opcode::CONSTANT &&
+        inst->GetPrev()->CastToInstWithTwoInputs()->GetInput2()->GetOpcode() == Opcode::CONSTANT) {
+        int32_t new_const = inst_casted->GetInput2()->CastToInstConstant()->GetConstant() +
+                            inst->GetPrev()->CastToInstWithTwoInputs()->GetInput2()->CastToInstConstant()->GetConstant();
+        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId());
+        new_inst->CastToInstConstant()->SetConstant(new_const);
         inst->GetBB()->PushFrontInst(new_inst);
-        new_inst->GetUsers().AddUser(inst);
+        new_inst->AddUser(inst);
 
-        inst->GetInput2()->GetInputInst()->GetUsers().RemoveUser(inst);
-        if (inst->GetInput2()->GetInputInst()->GetUsers().GetUsers().size() == 0)
-            inst->GetInput2()->GetInputInst()->SetBB(nullptr);
+        inst_casted->GetInput2()->RemoveUser(inst);
+        if (inst_casted->GetInput2()->GetUsers().size() == 0)
+            inst_casted->GetInput2()->SetBB(nullptr);
 
-        inst->GetInput1()->GetInputInst()->GetUsers().RemoveUser(inst);
-        if (inst->GetInput1()->GetInputInst()->GetUsers().GetUsers().size() == 0)
-            inst->GetInput1()->GetInputInst()->SetBB(nullptr);
+        inst_casted->GetInput1()->RemoveUser(inst);
+        if (inst_casted->GetInput1()->GetUsers().size() == 0)
+            inst_casted->GetInput1()->SetBB(nullptr);
 
-        inst->SubstituteInput(inst->GetInput2()->GetInputInst(), new_inst);
-        inst->SubstituteInput(inst->GetInput1()->GetInputInst(), inst->GetPrev()->GetInput1()->GetInputInst());
+        inst->SubstituteInput(inst_casted->GetInput2(), new_inst);
+        inst->SubstituteInput(inst_casted->GetInput1(), inst->GetPrev()->CastToInstWithTwoInputs()->GetInput1());
     }
 }
 
 void Peephole::VisitXOR(Inst* inst)
 {
     assert(inst->GetOpcode() == Opcode::XOR);
+    auto inst_casted = inst->CastToInstWithTwoInputs();
 
     // case 1
     // 1 xor v0 0
     // ----------
     // users(v1) = users(v0)
-    if (inst->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT &&
-        inst->GetInput2()->GetInputInst()->GetConstant() == 0) {
-        auto input1 = inst->GetInput1()->GetInputInst();
+    if (inst_casted->GetInput2()->GetOpcode() == Opcode::CONSTANT &&
+        inst_casted->GetInput2()->CastToInstConstant()->GetConstant() == 0) {
+        auto input1 = inst_casted->GetInput1();
         ProcessUsersInputs(inst, input1);
         inst->SetBB(nullptr);
     }
@@ -189,25 +195,25 @@ void Peephole::VisitXOR(Inst* inst)
     // -----------
     // 2 constant 0
     // users(v1) = users(v2)
-    if (inst->GetInput1()->GetInputInst() == inst->GetInput2()->GetInputInst()) {
-        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId(), 0);
+    if (inst_casted->GetInput1() == inst_casted->GetInput2()) {
+        auto new_inst = Inst::InstBuilder<Opcode::CONSTANT>(Inst::NextId());
+        new_inst->CastToInstConstant()->SetConstant(0);
         inst->GetBB()->PushFrontInst(new_inst);
         ProcessUsersInputs(inst, new_inst);
         inst->SetBB(nullptr);
     }
-
     // case 3
     // xor v0 -1
     // ---------
     // not v0
-    if (inst->GetInput2()->GetInputInst()->GetOpcode() == Opcode::CONSTANT &&
-        inst->GetInput2()->GetInputInst()->GetConstant() == -1) {
+    if (inst_casted->GetInput2()->GetOpcode() == Opcode::CONSTANT &&
+        inst_casted->GetInput2()->CastToInstConstant()->GetConstant() == -1) {
 
-        auto new_inst = Inst::InstBuilder<Opcode::NOT>(Inst::NextId(), inst->GetInput1()->GetInputId());
+        auto new_inst = Inst::InstBuilder<Opcode::NOT>(Inst::NextId());
+        new_inst->CastToInstWithOneInput()->SetInput1(inst_casted->GetInput1());
         inst->GetBB()->InsertInst(inst, new_inst);
-        new_inst->GetInput1()->SetInputInst(inst->GetInput1()->GetInputInst());
-        inst->GetInput1()->GetInputInst()->GetUsers().RemoveUser(inst);
-        inst->GetInput1()->GetInputInst()->GetUsers().AddUser(new_inst);
+        inst_casted->GetInput1()->RemoveUser(inst);
+        inst_casted->GetInput1()->AddUser(new_inst);
 
         ProcessUsersInputs(inst, new_inst);
 

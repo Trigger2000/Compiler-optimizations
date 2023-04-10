@@ -5,53 +5,28 @@
 
 #include "basic_block.h"
 #include "marker.h"
-#include "../pass/pass_manager.h"
-
-class Loop;
+#include "loop.h"
+#include "pass/pass_manager.h"
 
 class Graph : public PassManager, public MarkerManager
 {
   public:
-    // Create graph and bind basic blocks within it, also assign successors and predecessors
-    Graph(std::initializer_list<BasicBlock*> bbs);
-    Graph() = delete;
-    ~Graph()
-    {
-        for (auto item : basic_blocks_) {
-            BasicBlock::BasicBlockDestroyer(item);
-        }
-        delete root_loop_;
-    }
+    Graph(std::initializer_list<BasicBlock*> bbs) : basic_blocks_(bbs) {}
+
+    ~Graph();
+    static void GraphDestroyer(Graph *g);
     
     template <typename Pass>
-    void RunPass()
-    {
-        PassManager::RunPass<Pass>(this);
-    }
+    void RunPass();
 
     template <typename Pass>
-    bool IsPassValid()
-    {
-        return pass_validity_[GetPassIndex<Pass>()];
-    }
+    bool IsPassValid();
 
     template <typename Pass>
-    void SetPassValidity(bool is_valid)
-    {
-        pass_validity_[GetPassIndex<Pass>()] = is_valid;
-    }
+    void SetPassValidity(bool is_valid);
 
     // Check that prob_dominator dominates prob_dominated
-    bool CheckDominance(BasicBlock *prob_dominator, BasicBlock *prob_dominated)
-    {
-        BasicBlock* idom = prob_dominated->GetIDom();
-        while (idom != nullptr) {
-            if (idom == prob_dominator)
-                return true;
-            idom = idom->GetIDom();
-        }
-        return false;
-    }
+    bool CheckDominance(BasicBlock *prob_dominator, BasicBlock *prob_dominated);
 
     BasicBlock *GetBBbyId(uint32_t id);
     Inst* GetInstById(uint32_t id);
@@ -59,30 +34,37 @@ class Graph : public PassManager, public MarkerManager
     ACCESSOR_MUTATOR(basic_blocks_, BasicBlocks, const std::vector<BasicBlock*>&)
     ACCESSOR_MUTATOR(rpo_basic_blocks_, RPOBasicBlocks, std::vector<BasicBlock*>)
     ACCESSOR_MUTATOR(root_loop_, RootLoop, Loop*)
-    ACCESSOR_MUTATOR(name_, Name, std::string)
 
-    void AddBasicBlock(BasicBlock* bb)
-    {
-        assert(bb->GetGraph() == nullptr);
-        bb->SetGraph(this);
-        basic_blocks_.push_back(bb);
-    }
+    void AddBasicBlock(BasicBlock* bb);
 
-    void Clear()
-    {
-        basic_blocks_.clear();
-    }
+    void Clear();
 
-    void BuildDFG();
     void Dump();
 
   private:
-    std::string name_;
     std::vector<BasicBlock*> basic_blocks_;
     std::vector<BasicBlock*> rpo_basic_blocks_;
     Loop* root_loop_ = nullptr;
 
     std::bitset<std::tuple_size_v<PassList>> pass_validity_;
 };
+
+template <typename Pass>
+void Graph::RunPass()
+{
+    PassManager::RunPass<Pass>(this);
+}
+
+template <typename Pass>
+bool Graph::IsPassValid()
+{
+    return pass_validity_[GetPassIndex<Pass>()];
+}
+
+template <typename Pass>
+void Graph::SetPassValidity(bool is_valid)
+{
+    pass_validity_[GetPassIndex<Pass>()] = is_valid;
+}
 
 #endif // GRAPH_H

@@ -4,7 +4,7 @@
 #include <tuple>
 #include <type_traits>
 
-#include "ir/graph.h"
+class Graph;
 
 class RPO;
 class DomTreeSlow;
@@ -20,31 +20,39 @@ using PassList = std::tuple<RPO, DomTreeSlow, DomTreeFast, LoopAnalyzer, ConstFo
 class PassManager {
 protected:
     template <typename Pass>
-    void RunPass(Graph *g)
-    {
-        if (g->template IsPassValid<Pass>()) {
-            return;
-        }
-        Pass pass;
-        pass.RunPassImpl(g);
-        g->template SetPassValidity<Pass>(true);
-    }
+    void RunPass(Graph *g);
 
     template <typename Pass>
-    constexpr size_t GetPassIndex() {
-        GetPassIndexHelper<Pass, 0>();
-    }
-
+    constexpr size_t GetPassIndex();
 private:
     template <typename Pass, size_t Index>
-    constexpr size_t GetPassIndexHelper() {
-        static_assert(Index < std::tuple_size_v<PassList>);
-        if constexpr (std::is_same_v<Pass, std::tuple_element_t<Index, PassList>>) {
-            return Index;
-        } else {
-            return GetPassIndexHelper<Pass, Index + 1>();
-        }
-    }
+    constexpr size_t GetPassIndexHelper();
 };
+
+template <typename Pass>
+void PassManager::RunPass(Graph *g)
+{
+    if (g->template IsPassValid<Pass>()) {
+        return;
+    }
+    Pass pass;
+    pass.RunPassImpl(g);
+    g->template SetPassValidity<Pass>(true);
+}
+
+template <typename Pass>
+constexpr size_t PassManager::GetPassIndex() {
+    GetPassIndexHelper<Pass, 0>();
+}
+
+template <typename Pass, size_t Index>
+constexpr size_t PassManager::GetPassIndexHelper() {
+    static_assert(Index < std::tuple_size_v<PassList>);
+    if constexpr (std::is_same_v<Pass, std::tuple_element_t<Index, PassList>>) {
+        return Index;
+    } else {
+        return GetPassIndexHelper<Pass, Index + 1>();
+    }
+}
 
 #endif // PASS_MANAGER_H

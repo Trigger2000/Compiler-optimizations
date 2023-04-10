@@ -16,9 +16,13 @@ class Loop;
 class BasicBlock : public Markers
 {
   public:
-    // TODO remove id from template parameters
-    template <uint32_t bb_id, uint32_t... successors>
-    static BasicBlock* BasicBlockBuilder(std::initializer_list<Inst*> insts);
+    BasicBlock(uint32_t bb_id) : id_(bb_id)
+    {
+        if (next_id_ < bb_id) {
+            next_id_ = bb_id;
+        }
+        next_id_++;
+    }
     static void BasicBlockDestroyer(BasicBlock* bb);
 
     void PushBackInst(Inst* inst)
@@ -113,7 +117,6 @@ class BasicBlock : public Markers
 
     ACCESSOR_MUTATOR(first_inst_, FirstInst, Inst*)
     ACCESSOR_MUTATOR(last_inst_, LastInst, Inst*)
-    ACCESSOR_MUTATOR(first_phi_, FirstPhi, Inst*)
     ACCESSOR_MUTATOR(graph_, Graph, Graph*)
     ACCESSOR_MUTATOR(id_, Id, uint32_t)
     ACCESSOR_MUTATOR(size_, Size, uint32_t)
@@ -126,27 +129,20 @@ class BasicBlock : public Markers
         return preds_;
     }
 
-    const std::vector<std::variant<uint32_t, BasicBlock*>>& GetSuccs() const
+    const std::vector<BasicBlock*>& GetSuccs() const
     {
         return succs_;
     }
 
     void AddSucc(BasicBlock* bb)
     {
-        for (auto& succ: succs_) {
-            if (std::holds_alternative<uint32_t>(succ) && std::get<uint32_t>(succ) == bb->GetId()) {
-                succ = bb;
-                return;
-            }
-        }
         succs_.push_back(bb);
     }
 
     bool HasSucc(BasicBlock* bb)
     {
         for (auto& succ: succs_) {
-            if ((std::holds_alternative<BasicBlock*>(succ) && std::get<BasicBlock*>(succ) == bb) ||
-                (std::holds_alternative<uint32_t>(succ) && std::get<uint32_t>(succ) == bb->GetId())) {
+            if (bb == succ) {
                 return true;
             }
         }
@@ -160,15 +156,7 @@ class BasicBlock : public Markers
 
     void RemoveSucc(BasicBlock* bb)
     {
-        size_t pos = 0;
-        for (auto succ: succs_) {
-            if ((std::holds_alternative<BasicBlock*>(succ) && std::get<BasicBlock*>(succ) == bb) ||
-                (std::holds_alternative<uint32_t>(succ) && std::get<uint32_t>(succ) == bb->GetId())) {
-                succs_.erase(succs_.begin() + pos);
-                return;
-            }
-            pos++;
-        }
+        succs_.erase(std::find(succs_.begin(), succs_.end(), bb));
     }
 
     void RemovePred(BasicBlock* bb)
@@ -190,7 +178,7 @@ class BasicBlock : public Markers
     BasicBlock(BasicBlock& bb) = default;
 
     std::vector<BasicBlock*> preds_;
-    std::vector<std::variant<uint32_t, BasicBlock*>> succs_;
+    std::vector<BasicBlock*> succs_;
 
     // TODO remove this
     std::vector<BasicBlock*> dominators_;
@@ -198,7 +186,6 @@ class BasicBlock : public Markers
 
     Inst* first_inst_ = nullptr;
     Inst* last_inst_ = nullptr;
-    Inst* first_phi_ = nullptr;
     Graph* graph_ = nullptr;
     Loop* loop_ = nullptr;
 
@@ -207,54 +194,5 @@ class BasicBlock : public Markers
     
     static inline uint32_t next_id_ = 0;
 };
-
-template <uint32_t bb_id, uint32_t... successors>
-BasicBlock* BasicBlock::BasicBlockBuilder(std::initializer_list<Inst*> insts)
-{
-    BasicBlock* result = new BasicBlock;
-
-    result->size_ = insts.size();
-    // Bind instructions within basic block
-    if (next_id_ < bb_id)
-        next_id_ = bb_id;
-    next_id_++;
-    result->id_ = bb_id;
-    if (insts.size() > 0) {
-        result->first_inst_ = *(insts.begin());
-        result->last_inst_ = *(std::prev(insts.end(), 1));
-        result->first_inst_->SetBB(result);
-        result->last_inst_->SetBB(result);
-    }
-    if (insts.size() > 1) {
-        result->first_inst_->SetNext(*(std::next(insts.begin(), 1)));
-        result->last_inst_->SetPrev(*(std::prev(insts.end(), 2)));
-
-        for (auto item = std::next(insts.begin(), 1); item < std::prev(insts.end(), 1); std::advance(item, 1)) {
-            (*item)->SetBB(result);
-            (*item)->SetBB(result);
-            (*item)->SetPrev(*(std::prev(item, 1)));
-            (*item)->SetNext(*(std::next(item, 1)));
-        }
-    }
-
-    // set first_phi_
-    for (auto item = insts.begin(); item < insts.end(); std::advance(item, 1)) {
-        if ((*item)->GetType() == Type::InstPhi) {
-            result->first_phi_ = *item;
-            break;
-        }
-    }
-    
-    if constexpr (sizeof...(successors) != 0) {
-        // static_assert(sizeof...(successors) <= 2);
-        // TODO remove this vector?
-        std::vector<uint32_t> tmp_vector = std::vector{ successors... };
-        for (auto succ_num: tmp_vector) {
-            result->succs_.push_back(succ_num);
-        }
-    }
-
-    return result;
-}
 
 #endif // BASIC_BLOCK_H

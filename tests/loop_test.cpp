@@ -1,10 +1,11 @@
 #include "gtest/gtest.h"
 
 #include "pass/loop_analyzer.h"
+#include "ir/ir_builder.h"
 
-#define INST Inst::InstBuilder
-#define BASIC_BLOCK BasicBlock::BasicBlockBuilder
-#define GRAPH Graph
+#define INST irb.InstBuilder
+#define BASIC_BLOCK irb.BasicBlockBuilder
+#define GRAPH irb.GraphBuilder
 
 void CheckLoopBlocks(Loop* loop, std::vector<uint32_t> expected_block_ids)
 {
@@ -19,6 +20,7 @@ void CheckLoopBlocks(Loop* loop, std::vector<uint32_t> expected_block_ids)
 
 // test case 1 from lecture
 TEST(LOOP_TEST, LOOP_TEST_1) {
+    IrBuilder irb;
     /*
                 0
                 |
@@ -31,7 +33,7 @@ TEST(LOOP_TEST, LOOP_TEST_1) {
             |   v   v
             |-->3<--6
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 5>({}),
         BASIC_BLOCK<2, 3>({}),
@@ -39,10 +41,10 @@ TEST(LOOP_TEST, LOOP_TEST_1) {
         BASIC_BLOCK<4, 3>({}),
         BASIC_BLOCK<5, 4, 6>({}),
         BASIC_BLOCK<6, 3>({}),
-    };
+    });
 
-    g.RunPass<LoopAnalyzer>();
-    Loop* root_loop = g.GetRootLoop();
+    g->RunPass<LoopAnalyzer>();
+    Loop* root_loop = g->GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 0);
     CheckLoopBlocks(root_loop, {0, 1, 2, 3, 4, 5, 6});
@@ -50,6 +52,7 @@ TEST(LOOP_TEST, LOOP_TEST_1) {
 
 // test case 2 from lecture
 TEST(LOOP_TEST, LOOP_TEST_2) {
+    IrBuilder irb;
     /*
                 0
                 |
@@ -71,7 +74,7 @@ TEST(LOOP_TEST, LOOP_TEST_2) {
            |    v
            7<---6--->8--->10
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 9>({}),
         BASIC_BLOCK<2, 3>({}),
@@ -83,10 +86,10 @@ TEST(LOOP_TEST, LOOP_TEST_2) {
         BASIC_BLOCK<8, 10>({}),
         BASIC_BLOCK<9, 2>({}),
         BASIC_BLOCK<10>({})
-    };
+    });
 
-    g.RunPass<LoopAnalyzer>();
-    Loop* root_loop = g.GetRootLoop();
+    g->RunPass<LoopAnalyzer>();
+    Loop* root_loop = g->GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
     CheckLoopBlocks(root_loop, {0, 8, 10});
@@ -109,6 +112,7 @@ TEST(LOOP_TEST, LOOP_TEST_2) {
 
 // test case 3 from lecture
 TEST(LOOP_TEST, LOOP_TEST_3) {
+    IrBuilder irb;
     /*
                 0
                 |
@@ -129,7 +133,7 @@ TEST(LOOP_TEST, LOOP_TEST_3) {
             |   v
             |-->8
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 4>({}),
         BASIC_BLOCK<2, 3>({}),
@@ -139,10 +143,10 @@ TEST(LOOP_TEST, LOOP_TEST_3) {
         BASIC_BLOCK<6, 2, 8>({}),
         BASIC_BLOCK<7, 6, 8>({}),
         BASIC_BLOCK<8>({})
-    };
+    });
 
-    g.RunPass<LoopAnalyzer>();
-    Loop* root_loop = g.GetRootLoop();
+    g->RunPass<LoopAnalyzer>();
+    Loop* root_loop = g->GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
     CheckLoopBlocks(root_loop, {0, 2, 3, 6, 7, 8});
@@ -155,6 +159,7 @@ TEST(LOOP_TEST, LOOP_TEST_3) {
 
 // test case 4 from lecture
 TEST(LOOP_TEST, LOOP_TEST_4) {
+    IrBuilder irb;
     /*
                 0
                 |
@@ -167,16 +172,16 @@ TEST(LOOP_TEST, LOOP_TEST_4) {
                 v   |
                 3---|
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 4>({}),
         BASIC_BLOCK<2, 3>({}),
         BASIC_BLOCK<3, 1>({}),
         BASIC_BLOCK<4>({}),
-    };
+    });
 
-    g.RunPass<LoopAnalyzer>();
-    Loop* root_loop = g.GetRootLoop();
+    g->RunPass<LoopAnalyzer>();
+    Loop* root_loop = g->GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
     CheckLoopBlocks(root_loop, {0, 4});
@@ -189,6 +194,7 @@ TEST(LOOP_TEST, LOOP_TEST_4) {
 
 // test case 5 from lecture
 TEST(LOOP_TEST, LOOP_TEST_5) {
+    IrBuilder irb;
     /*
                 0
                 |
@@ -201,17 +207,17 @@ TEST(LOOP_TEST, LOOP_TEST_5) {
             |   v
             |-->5
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2>({}),
         BASIC_BLOCK<2, 3, 5>({}),
         BASIC_BLOCK<3, 4, 5>({}),
         BASIC_BLOCK<4, 1>({}),
         BASIC_BLOCK<5>({}),
-    };
+    });
 
-    g.RunPass<LoopAnalyzer>();
-    Loop* root_loop = g.GetRootLoop();
+    g->RunPass<LoopAnalyzer>();
+    Loop* root_loop = g->GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
     CheckLoopBlocks(root_loop, {0, 5});
@@ -224,6 +230,7 @@ TEST(LOOP_TEST, LOOP_TEST_5) {
 
 // test case 6 from lecture
 TEST(LOOP_TEST, LOOP_TEST_6) {
+    IrBuilder irb;
     /*
                 0<----------|
                 |           |
@@ -242,7 +249,7 @@ TEST(LOOP_TEST, LOOP_TEST_6) {
                 v           |
                 7-----------|
     */
-    Graph g = GRAPH{
+    Graph *g = GRAPH({
         BASIC_BLOCK<0, 1>({}),
         BASIC_BLOCK<1, 2, 3>({}),
         BASIC_BLOCK<2, 4, 5>({}),
@@ -251,10 +258,10 @@ TEST(LOOP_TEST, LOOP_TEST_6) {
         BASIC_BLOCK<5, 6>({}),
         BASIC_BLOCK<6, 1, 7>({}),
         BASIC_BLOCK<7, 0>({}),
-    };
+    });
 
-    g.RunPass<LoopAnalyzer>();
-    Loop* root_loop = g.GetRootLoop();
+    g->RunPass<LoopAnalyzer>();
+    Loop* root_loop = g->GetRootLoop();
     ASSERT_EQ(root_loop->GetOuterLoop(), nullptr);
     ASSERT_EQ(root_loop->GetInnerLoops().size(), 1);
     CheckLoopBlocks(root_loop, {4});

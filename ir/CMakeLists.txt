@@ -3,6 +3,7 @@ set(IR_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/basic_block.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/graph.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/ir_builder.cpp
 )
 
 add_library(ir SHARED ${IR_SOURCES})

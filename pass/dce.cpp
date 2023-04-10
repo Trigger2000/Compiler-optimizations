@@ -34,19 +34,19 @@ void DCE::MarkRecursively(Inst* inst, marker sweep_marker)
     if (inst->GetType() != Type::InstWithTwoInputs)
         return;
 
-    auto input1 = inst->GetInput1()->GetInputInst();
-    auto input2 = inst->GetInput2()->GetInputInst();
+    auto input1 = inst->CastToInstWithTwoInputs()->GetInput1();
+    auto input2 = inst->CastToInstWithTwoInputs()->GetInput2();
 
-    input1->GetUsers().RemoveUser(inst);
-    if (input1->GetUsers().GetUsers().size() == 0) {
+    input1->RemoveUser(inst);
+    if (input1->GetUsers().size() == 0) {
         MarkRecursively(input1, sweep_marker);
     }
 
     if (input1 == input2)
         return;
     
-    input2->GetUsers().RemoveUser(inst);
-    if (input2->GetUsers().GetUsers().size() == 0) {
+    input2->RemoveUser(inst);
+    if (input2->GetUsers().size() == 0) {
         MarkRecursively(input2, sweep_marker);
     }
 }

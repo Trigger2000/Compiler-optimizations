@@ -48,51 +48,36 @@ bool Inst::IsEndInst()
     return bb_->GetLastInst() == this;
 }
 
-void InstUsers::Dump()
-{
-    for (auto item : users_) {
-        std::cout << item->GetId() << " ";
-    }
-}
-
 void InstWithTwoInputs::Dump()
 {
     Inst::Dump();
-    std::cout << input1_->GetInputId() << " " << input2_->GetInputId() << " -> ";
-    users_.Dump();
+    std::cout << input1_->GetId() << " " << input2_->GetId() << " -> ";
+    Inst::DumpUsers();
     std::cout << "\n";
 }
 
 void InstWithOneInput::Dump()
 {
     Inst::Dump();
-    std::cout << input1_->GetInputId() << " -> ";
-    users_.Dump();
+    std::cout << input1_->GetId() << " -> ";
+    Inst::DumpUsers();
     std::cout << "\n";
 }
 
 void InstJmp::Dump()
 {
     Inst::Dump();
-    std::cout << target_inst_->GetInputId() << "\n";
+    std::cout << target_bb_->GetId() << "\n";
 }
 
 void InstPhi::Dump()
 {
     Inst::Dump();
-    for (auto item : phi_inputs_) {
-        std::cout << "(" << item->GetInputInst()->GetId() << ", " << item->GetInputBB()->GetId() << ") ";
+    for (int i = 0; i < input_inst_.size(); ++i) {
+        std::cout << "(" << input_inst_[i]->GetId() << ", " << input_bb_[i]->GetId() << ") ";
     }
     std::cout << "-> ";
-    users_.Dump();
-    std::cout << "\n";
-}
-
-void InstParameter::Dump()
-{
-    Inst::Dump();
-    std::cout << "-> ";
-    users_.Dump();
+    Inst::DumpUsers();
     std::cout << "\n";
 }
 
@@ -100,61 +85,62 @@ void InstConstant::Dump()
 {
     Inst::Dump();
     std::cout << constant_ << " -> ";
-    users_.Dump();
+    Inst::DumpUsers();
     std::cout << "\n";
 }
 
 void InstCall::Dump()
 {
     Inst::Dump();
-    std::cout << callee_->GetName() << " (";
-    for (auto arg = arguments_.begin(); arg != std::prev(arguments_.end(), 1); arg = std::next(arg, 1)) {
-        std::cout << (*arg)->GetInputId() << ", ";
+    std::cout << "( ";
+    for (auto&& item: arguments_) {
+        std::cout << item->GetId() << ", ";
     }
-    std::cout << (*std::prev(arguments_.end(), 1))->GetInputId() << ")\n";
-}
-
-void InstWithNoInputsUsers::Dump()
-{
-    Inst::Dump();
+    std::cout << ")";
+    Inst::DumpUsers();
     std::cout << "\n";
 }
 
-void PhiInput::SetInputBB(BasicBlock* input_bb)
+void InstWithNoInputs::Dump()
 {
-    assert(input_bb->GetId() == input_bb_id_);
-    input_bb_ = input_bb;
+    Inst::Dump();
+    Inst::DumpUsers();
+    std::cout << "\n";
 }
 
 void InstWithTwoInputs::SubstituteInput(Inst* old_input, Inst* new_input)
 {
-    assert(GetInput1()->GetInputInst() == old_input || GetInput2()->GetInputInst() == old_input);
-    if (GetInput1()->GetInputInst() == old_input) {
-        GetInput1()->SetInputId(new_input->GetId());
-        GetInput1()->SetInputInst(new_input);
+    assert(input1_ == old_input || input2_ == old_input);
+    if (input1_ == old_input) {
+        input1_ = new_input;
     } else {
-        GetInput2()->SetInputId(new_input->GetId());
-        GetInput2()->SetInputInst(new_input);
+        input2_ = new_input;
     }
 }
 
 void InstWithOneInput::SubstituteInput(Inst* old_input, Inst* new_input)
 {
-    assert(GetInput1()->GetInputInst() == old_input);
-    GetInput1()->SetInputId(new_input->GetId());
-    GetInput1()->SetInputInst(new_input);
+    assert(input1_ == old_input);
+    input1_ = new_input;
 }
 
 void InstPhi::SubstituteInput(Inst* old_input, Inst* new_input)
 {
-    for (auto phi_input: GetPhiInputs()) {
-        if (phi_input->GetInputInst() == old_input) {
-            phi_input->SetInputId(new_input->GetId());
-            phi_input->SetInputInst(new_input);
-            phi_input->SetInputBB(new_input->GetBB());
-            phi_input->SetInputBBId(new_input->GetBB()->GetId());
+    for (int i = 0; i < input_inst_.size(); ++i) {
+        if (input_inst_[i] == old_input) {
+            input_inst_[i] = new_input;
+            input_bb_[i] = new_input->GetBB();
             return;
         }
     }
     UNREACHABLE()
 }
+
+#define CAST_DEFINE_METHOD(Type)                                        \
+Type* Inst::CastTo##Type()                                              \
+{                                                                       \
+    return static_cast<Type*>(this);                                    \
+}
+
+    TYPE_LIST(CAST_DEFINE_METHOD)
+#undef CAST_METHOD

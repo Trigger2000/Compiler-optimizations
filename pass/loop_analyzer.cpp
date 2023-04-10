@@ -2,13 +2,6 @@
 #include "dom_tree_fast.h"
 #include "rpo.h"
 
-Loop::~Loop()
-{
-    for (auto inner_loop: inner_loops_) {
-        delete inner_loop;
-    }
-}
-
 void LoopAnalyzer::RunPassImpl(Graph *g)
 {
     g_ = g;
@@ -46,7 +39,7 @@ void LoopAnalyzer::ProccessEdge(BasicBlock *curr, BasicBlock *prev)
     curr->SetMarker(black_marker_);
     curr->SetMarker(gray_marker_);
     for (auto succ: curr->GetSuccs()) {
-        ProccessEdge(std::get<BasicBlock*>(succ), curr);
+        ProccessEdge(succ, curr);
     }
     curr->ResetMarker(gray_marker_);
 }
