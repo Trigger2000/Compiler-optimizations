@@ -19,7 +19,9 @@
     FUNC(SHR, InstWithTwoInputs)                                                                                       \
     FUNC(SHL, InstWithTwoInputs)                                                                                       \
     FUNC(XOR, InstWithTwoInputs)                                                                                       \
+    FUNC(CHECK_EQ, InstWithTwoInputs)                                                                                  \
     FUNC(NOT, InstWithOneInput)                                                                                        \
+    FUNC(CHECK_EQ_ZERO, InstWithOneInput)                                                                              \
     /* Control */                                                                                                      \
     FUNC(JMP, InstJmp)                                                                                                 \
     FUNC(JA, InstJmp)                                                                                                  \

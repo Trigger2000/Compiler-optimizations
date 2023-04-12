@@ -28,6 +28,8 @@ class Graph : public PassManager, public MarkerManager
 
     // Check that prob_dominator dominates prob_dominated
     bool CheckDominance(BasicBlock *prob_dominator, BasicBlock *prob_dominated);
+    // Check that prob_dominator dominates prob_dominated
+    bool CheckDominance(Inst *prob_dominator, Inst *prob_dominated);
 
     BasicBlock *GetBBbyId(uint32_t id);
     Inst* GetInstById(uint32_t id);

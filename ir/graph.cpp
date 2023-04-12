@@ -56,6 +56,20 @@ bool Graph::CheckDominance(BasicBlock *prob_dominator, BasicBlock *prob_dominate
     return false;
 }
 
+bool Graph::CheckDominance(Inst *prob_dominator, Inst *prob_dominated)
+{
+    if (prob_dominator->GetBB() == prob_dominated->GetBB()) {
+        for (Inst* cur_inst = prob_dominator; cur_inst != nullptr; cur_inst = cur_inst->GetNext()) {
+            if (cur_inst == prob_dominated) {
+                return true;
+            }
+        }
+        return false;
+    } else {
+        return CheckDominance(prob_dominator->GetBB(), prob_dominated->GetBB());
+    }
+}
+
 void Graph::AddBasicBlock(BasicBlock* bb)
 {
     assert(bb->GetGraph() == nullptr);

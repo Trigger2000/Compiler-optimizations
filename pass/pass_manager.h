@@ -15,9 +15,11 @@ class DCE;
 class Peephole;
 class Inlining;
 class LivenessAnalysis;
+class CheckElimination;
 
 using PassList = std::tuple<RPO, DomTreeSlow, DomTreeFast, LoopAnalyzer,
-                            ConstFolding, DCE, Peephole, Inlining, LivenessAnalysis>;
+                            ConstFolding, DCE, Peephole, Inlining, LivenessAnalysis,
+                            CheckElimination>;
 
 class PassManager {
 protected:
