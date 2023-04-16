@@ -11,9 +11,6 @@ public:
     void RunPassImpl(Graph *g);
 
 private:
-    void BuildLinearOrder(Graph *g);
-    void ProccessLoop(Loop* loop, marker visit_marker);
-
     void InitLiveness();
     void CalculateLifeRanges(Graph *g);
 

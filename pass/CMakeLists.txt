@@ -7,8 +7,9 @@ set(PASS_SOURCES
     ${CMAKE_CURRENT_SOURCE_DIR}/loop_analyzer.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/peephole.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/inlining.cpp
-    ${CMAKE_CURRENT_SOURCE_DIR}/liveness_analysis.cpp
     ${CMAKE_CURRENT_SOURCE_DIR}/check_elimination.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/linear_order.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/liveness_analysis.cpp
 )
 
 add_library(pass SHARED ${PASS_SOURCES})

@@ -153,6 +153,14 @@ class BasicBlock : public Markers
         return false;
     }
 
+    void SwapSuccs()
+    {
+        assert(succs_.size() == 2);
+        auto tmp = succs_[0];
+        succs_[0] = succs_[1];
+        succs_[1] = tmp;
+    }
+
     void AddPred(BasicBlock* bb)
     {
         preds_.push_back(bb);
@@ -177,6 +185,9 @@ class BasicBlock : public Markers
     {
         return next_id_;
     }
+
+    static const uint32_t FALSE_BRANCH_INDEX = 1;
+    static const uint32_t TRUE_BRANCH_INDEX = 0;
   private:
     BasicBlock() = default;
     BasicBlock(BasicBlock& bb) = default;

@@ -11,6 +11,8 @@ class IrBuilder
 public:
     Graph* GraphBuilder(std::initializer_list<BasicBlock*> bbs);
 
+    // first successor is true branch
+    // second successor is false branch
     template <uint32_t bb_id, uint32_t... successors>
     BasicBlock* BasicBlockBuilder(std::vector<Inst*> insts);
 

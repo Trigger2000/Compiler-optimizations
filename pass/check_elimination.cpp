@@ -44,6 +44,7 @@ void CheckElimination::TryEliminateCheckTwoInput(Inst* inst, Graph *g)
     }
 }
 
+// works only with equal instruction, maybe remove it
 bool CheckElimination::CheckInputsEqual(InstWithTwoInputs* inst1, InstWithTwoInputs* inst2)
 {
     return ((inst1->GetInput1() == inst2->GetInput1()) && (inst1->GetInput2() == inst2->GetInput2())) ||

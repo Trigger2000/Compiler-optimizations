@@ -24,7 +24,12 @@
     FUNC(CHECK_EQ_ZERO, InstWithOneInput)                                                                              \
     /* Control */                                                                                                      \
     FUNC(JMP, InstJmp)                                                                                                 \
-    FUNC(JA, InstJmp)                                                                                                  \
+    FUNC(JMP_EQ, InstJmp)                                                                                                  \
+    FUNC(JMP_NE, InstJmp)                                                                                             \
+    FUNC(JMP_LE, InstJmp)                                                                                             \
+    FUNC(JMP_LT, InstJmp)                                                                                            \
+    FUNC(JMP_GE, InstJmp)                                                                                              \
+    FUNC(JMP_GT, InstJmp)                                                                                               \
     FUNC(RET, InstWithOneInput)                                                                                        \
     FUNC(RET_VOID, InstWithNoInputs)                                                                              \
     FUNC(THROW, InstWithNoInputs)                                                                                 \

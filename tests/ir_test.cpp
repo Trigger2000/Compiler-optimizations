@@ -45,7 +45,7 @@ TEST(IR_TEST, TEST1) {
         BASIC_BLOCK<3, 4, 5>({
             INST<Opcode::PHI>(7, 5, 2, 13, 4),
             INST<Opcode::CMP>(8, 7, 6),
-            INST<Opcode::JA>(9, 15)
+            INST<Opcode::JMP_EQ>(9, 15),
         }),
         BASIC_BLOCK<4, 3>({
             INST<Opcode::PHI>(10, 4, 2, 12, 4),

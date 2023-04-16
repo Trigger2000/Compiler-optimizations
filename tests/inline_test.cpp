@@ -101,7 +101,7 @@ TEST(INLINING_TEST, TEST1) {
             INST<Opcode::PARAMETER>(3),
             INST<Opcode::CONSTANT>(4, 42),
             INST<Opcode::CMP>(5, 3, 4),
-            INST<Opcode::JA>(6, 3)
+            INST<Opcode::JMP_EQ>(6, 3)
         }),
         BASIC_BLOCK<2, 4>({
             INST<Opcode::ADD>(7, 1, 2),
@@ -138,7 +138,7 @@ TEST(INLINING_TEST, TEST1) {
 
     CheckBasicBlock(caller->GetBasicBlocks()[1], {{5}, {2, 3}, {
         {Opcode::CMP, {13, 4}, {}},
-        {Opcode::JA, {3}, {}},
+        {Opcode::JMP_EQ, {3}, {}},
         }
     });
 
@@ -183,7 +183,7 @@ TEST(INLINING_TEST, TEST2) {
         }),
         BASIC_BLOCK<2, 1>({
             INST<Opcode::CMP>(5, 4, 3),
-            INST<Opcode::JA>(6, 1),
+            INST<Opcode::JMP_EQ>(6, 1),
             INST<Opcode::RET_VOID>(7),
         })
     });
@@ -213,7 +213,7 @@ TEST(INLINING_TEST, TEST2) {
 
     CheckBasicBlock(caller->GetBasicBlocks()[2], {{1}, {1, caller->GetBasicBlocks()[3]->GetId()}, {
         {Opcode::CMP, {4, 3}, {}},
-        {Opcode::JA, {1}, {}},
+        {Opcode::JMP_EQ, {1}, {}},
         }
     });
 
@@ -241,7 +241,7 @@ TEST(INLINING_TEST, TEST3) {
             INST<Opcode::PARAMETER>(3),
             INST<Opcode::CONSTANT>(4, 42),
             INST<Opcode::CMP>(5, 3, 4),
-            INST<Opcode::JA>(6, 3)
+            INST<Opcode::JMP_EQ>(6, 3)
         }),
         BASIC_BLOCK<2>({
             INST<Opcode::ADD>(7, 1, 2),
@@ -276,7 +276,7 @@ TEST(INLINING_TEST, TEST3) {
 
     CheckBasicBlock(caller->GetBasicBlocks()[1], {{5}, {2, 3}, {
         {Opcode::CMP, {13, 4}, {}},
-        {Opcode::JA, {3}, {}},
+        {Opcode::JMP_EQ, {3}, {}},
         }
     });
 
@@ -315,7 +315,7 @@ TEST(INLINING_TEST, TEST4) {
             INST<Opcode::PARAMETER>(3),
             INST<Opcode::CONSTANT>(4, 42),
             INST<Opcode::CMP>(5, 3, 4),
-            INST<Opcode::JA>(6, 3)
+            INST<Opcode::JMP_EQ>(6, 3)
         }),
         BASIC_BLOCK<2>({
             INST<Opcode::ADD>(7, 1, 2),
@@ -350,7 +350,7 @@ TEST(INLINING_TEST, TEST4) {
 
     CheckBasicBlock(caller->GetBasicBlocks()[1], {{5}, {2, 3}, {
         {Opcode::CMP, {13, 4}, {}},
-        {Opcode::JA, {3}, {}},
+        {Opcode::JMP_EQ, {3}, {}},
         }
     });
 
