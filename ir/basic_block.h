@@ -9,7 +9,6 @@
 
 #include "inst.h"
 #include "marker.h"
-#include "live_interval.h"
 
 class Graph;
 class Loop;
@@ -104,6 +103,16 @@ class BasicBlock : public Markers
         return succs_.size() == 0;
     }
 
+    bool HasInst(Inst* inst)
+    {
+        for (auto item = first_inst_; item != nullptr; item = item->GetNext()) {
+            if (item == inst) {
+                return true;
+            } 
+        }
+        return false;
+    }
+
     bool IsLoopHeader();
 
     Inst* GetInstById(uint32_t id)
@@ -126,7 +135,6 @@ class BasicBlock : public Markers
     ACCESSOR_MUTATOR(dominators_, Dominators, const std::vector<BasicBlock*>&)
     ACCESSOR_MUTATOR(idom_, IDom, BasicBlock*)
     ACCESSOR_MUTATOR(loop_, Loop, Loop*)
-    ACCESSOR_MUTATOR(live_interval_, LiveInterval, LiveInterval)
 
     const std::vector<BasicBlock*>& GetPreds() const
     {
@@ -206,8 +214,6 @@ class BasicBlock : public Markers
 
     uint32_t id_ = 0;
     uint32_t size_ = 0;
-
-    LiveInterval live_interval_;
     
     static inline uint32_t next_id_ = 0;
 };

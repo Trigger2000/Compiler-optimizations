@@ -1,8 +1,6 @@
 #ifndef LINEAR_ORDER_H
 #define LINEAR_ORDER_H
 
-#include <unordered_map>
-
 #include "ir/graph.h"
 
 class LinearOrder {

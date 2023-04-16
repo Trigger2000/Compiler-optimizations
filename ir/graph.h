@@ -7,7 +7,7 @@
 #include "marker.h"
 #include "loop.h"
 #include "pass/pass_manager.h"
-#include "live_interval.h"
+#include "liveness_info.h"
 
 class Graph : public PassManager, public MarkerManager
 {
@@ -49,7 +49,7 @@ class Graph : public PassManager, public MarkerManager
     std::vector<BasicBlock*> basic_blocks_;
     std::vector<BasicBlock*> rpo_basic_blocks_;
     std::vector<BasicBlock*> linear_order_;
-    std::unordered_map<Inst*, LiveInterval> live_intervals_;
+    std::unordered_map<Inst*, LiveSet> live_intervals_;
     Loop* root_loop_ = nullptr;
 
     std::bitset<std::tuple_size_v<PassList>> pass_validity_;

@@ -4,7 +4,7 @@
 #include <unordered_map>
 
 #include "ir/graph.h"
-#include "ir/live_interval.h"
+#include "ir/liveness_info.h"
 
 class LivenessAnalysis {
 public:
@@ -13,9 +13,14 @@ public:
 private:
     void InitLiveness();
     void CalculateLifeRanges(Graph *g);
+    void AddPhiInputsToLiveset(BasicBlock *bb, LiveSet& live_set);
+    void IterateOverInputs(Inst* inst, LiveSet& live_set);
+    void AddInstLiveInterval(Inst* inst, uint32_t start, uint32_t end);
 
     std::vector<BasicBlock*> linear_order_;
-    std::unordered_map<uint32_t, LiveInterval> live_intervals_;
+    std::unordered_map<BasicBlock*, LiveSet> live_inputs_;
+    std::unordered_map<BasicBlock*, Liverange> bb_live_ranges_;
+    std::unordered_map<Inst*, Liverange> inst_live_ranges_;
 };
 
 #endif // LIVENESS_ANALYSIS_H
