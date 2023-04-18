@@ -19,7 +19,7 @@ public:
         live_set_.insert(inst);
     }
 
-    LiveSet Union(LiveSet& live_set)
+    void Union(LiveSet& live_set)
     {
         for (auto item: live_set.GetLiveSet()) {
             live_set_.insert(item);
@@ -35,11 +35,11 @@ private:
     std::set<Inst*> live_set_;
 };
 
-class Liverange
+class LiveRange
 {
 public:
-    Liverange() = default;
-    Liverange(uint32_t start, uint32_t end) : start_(start), end_(end) {}
+    LiveRange() = default;
+    LiveRange(uint32_t start, uint32_t end) : start_(start), end_(end) {}
     ACCESSOR_MUTATOR(start_, Start, uint32_t)
     ACCESSOR_MUTATOR(end_, End, uint32_t)
 

@@ -54,6 +54,7 @@ void LinearOrder::FixFalseBranchOrder(BasicBlock* bb)
                 continue;
             }
 
+            // TODO check somewhere that jump goes to true branch
             assert(pred->GetLastInst()->GetType() == Type::InstJmp);
 
             if (pred->GetSuccs()[BasicBlock::TRUE_BRANCH_INDEX] == bb && linear_order_.back() == pred) {
@@ -72,6 +73,7 @@ void LinearOrder::CheckFalseBranchOrder(BasicBlock* bb)
                 continue;
             }
 
+            // TODO check somewhere that jump goes to true branch
             assert(pred->GetLastInst()->GetType() == Type::InstJmp);
             if (pred->GetSuccs()[BasicBlock::FALSE_BRANCH_INDEX] == bb) {
                 // false block should follow jmp_<cond> block

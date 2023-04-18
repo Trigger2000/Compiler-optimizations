@@ -39,6 +39,16 @@ class Graph : public PassManager, public MarkerManager
     ACCESSOR_MUTATOR(linear_order_, LinearOrder, std::vector<BasicBlock*>)
     ACCESSOR_MUTATOR(root_loop_, RootLoop, Loop*)
 
+    const std::unordered_map<Inst*, LiveRange>& GetLiveIntervals()
+    {
+        return live_intervals_;
+    }
+
+    void SetLiveIntervals(std::unordered_map<Inst*, LiveRange> live_intervals)
+    {
+        live_intervals_ = live_intervals;
+    }
+
     void AddBasicBlock(BasicBlock* bb);
 
     void Clear();
@@ -49,7 +59,7 @@ class Graph : public PassManager, public MarkerManager
     std::vector<BasicBlock*> basic_blocks_;
     std::vector<BasicBlock*> rpo_basic_blocks_;
     std::vector<BasicBlock*> linear_order_;
-    std::unordered_map<Inst*, LiveSet> live_intervals_;
+    std::unordered_map<Inst*, LiveRange> live_intervals_;
     Loop* root_loop_ = nullptr;
 
     std::bitset<std::tuple_size_v<PassList>> pass_validity_;

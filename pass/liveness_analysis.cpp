@@ -37,7 +37,7 @@ void LivenessAnalysis::CalculateLifeRanges(Graph *g)
         for (auto succ: (*bb)->GetSuccs()) {
             live_set.Union(live_inputs_[succ]);
             
-            AddPhiInputsToLiveset(*bb, live_set);
+            AddPhiInputsToLiveset(*bb, succ, live_set);
         }
         
         // process initial liveset
@@ -47,9 +47,16 @@ void LivenessAnalysis::CalculateLifeRanges(Graph *g)
         
         // iterate over instructions
         for (Inst* inst = (*bb)->GetLastInst(); inst != nullptr; inst = inst->GetPrev()) {
-            inst_live_ranges_[inst].SetStart(inst->GetLiveNumber());
-
             live_set.RemoveInst(inst);
+            
+            if (inst->GetType() == Type::InstPhi) {
+                continue;
+            }
+
+            if (inst_live_ranges_.count(inst) == 0) {
+                inst_live_ranges_[inst].SetEnd(inst->GetLiveNumber() + 2);
+            }
+            inst_live_ranges_[inst].SetStart(inst->GetLiveNumber());
 
             IterateOverInputs(inst, live_set);
         }
@@ -70,14 +77,24 @@ void LivenessAnalysis::CalculateLifeRanges(Graph *g)
 
         live_inputs_[*bb] = live_set;
     }
+
+    for (auto item: inst_live_ranges_) {
+        if (item.first->GetType() == Type::InstJmp || item.first->GetOpcode() == Opcode::RET_VOID ||
+            item.first->GetOpcode() == Opcode::CMP) {
+            inst_live_ranges_[item.first].SetStart(0);
+            inst_live_ranges_[item.first].SetEnd(0);
+        }
+    }
+
+    g->SetLiveIntervals(inst_live_ranges_);
 }
 
-void LivenessAnalysis::AddPhiInputsToLiveset(BasicBlock *bb, LiveSet& live_set)
+void LivenessAnalysis::AddPhiInputsToLiveset(BasicBlock *curr_bb, BasicBlock *succ, LiveSet& live_set)
 {
-    Inst* curr_inst = bb->GetFirstInst();
+    Inst* curr_inst = succ->GetFirstInst();
     while (curr_inst->GetType() == Type::InstPhi) {
         for (auto input: curr_inst->CastToInstPhi()->GetInputInst()) {
-            if (bb->HasInst(input)) {
+            if (curr_bb->HasInst(input)) {
                 live_set.AddInst(input);
             }
         }
