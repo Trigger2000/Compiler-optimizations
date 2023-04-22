@@ -17,10 +17,11 @@ class Inlining;
 class CheckElimination;
 class LinearOrder;
 class LivenessAnalysis;
+class RegAlloc;
 
 using PassList = std::tuple<RPO, DomTreeSlow, DomTreeFast, LoopAnalyzer,
                             ConstFolding, DCE, Peephole, Inlining, CheckElimination,
-                            LinearOrder, LivenessAnalysis>;
+                            LinearOrder, LivenessAnalysis, RegAlloc>;
 
 class PassManager {
 protected:

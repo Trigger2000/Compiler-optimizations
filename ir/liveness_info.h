@@ -35,15 +35,18 @@ private:
     std::set<Inst*> live_set_;
 };
 
-class LiveRange
+class LiveInterval
 {
 public:
-    LiveRange() = default;
-    LiveRange(uint32_t start, uint32_t end) : start_(start), end_(end) {}
+    LiveInterval() = default;
+    LiveInterval(uint32_t start, uint32_t end) : start_(start), end_(end) {}
     ACCESSOR_MUTATOR(start_, Start, uint32_t)
     ACCESSOR_MUTATOR(end_, End, uint32_t)
+    ACCESSOR_MUTATOR(location_, Location, uint32_t)
+    ACCESSOR_MUTATOR(is_stack_location_, IsStackLocation, bool)
+    
 
-    void AddRange(uint32_t start, uint32_t end)
+    void AddInterval(uint32_t start, uint32_t end)
     {
         start_ = std::min(start, start_);
         end_ = std::max(end, end_);
@@ -52,6 +55,9 @@ public:
 private:
     uint32_t start_ = 0;
     uint32_t end_ = 0;
+
+    uint32_t location_ = 0;
+    bool is_stack_location_ = false;
 };
 
 

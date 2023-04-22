@@ -7,7 +7,7 @@ void LivenessAnalysis::RunPassImpl(Graph* g)
     linear_order_ = g->GetLinearOrder();
 
     InitLiveness();
-    CalculateLifeRanges(g);
+    CalculateLifeIntervals(g);
 }
 
 void LivenessAnalysis::InitLiveness()
@@ -15,7 +15,7 @@ void LivenessAnalysis::InitLiveness()
     uint32_t cur_live_num = 0;
     uint32_t cur_lin_num = 0;
     for (auto bb: linear_order_) {
-        uint32_t bb_live_range_start = cur_live_num;
+        uint32_t bb_live_interval_start = cur_live_num;
         for (auto inst = bb->GetFirstInst(); inst != nullptr; inst = inst->GetNext()) {
             if (inst->GetType() != Type::InstPhi) {
                 cur_live_num += 2;
@@ -25,11 +25,11 @@ void LivenessAnalysis::InitLiveness()
             cur_lin_num++;
         }
         cur_live_num += 2;
-        bb_live_ranges_[bb] = {bb_live_range_start, cur_live_num};
+        bb_live_interval_[bb] = {bb_live_interval_start, cur_live_num};
     }
 }
 
-void LivenessAnalysis::CalculateLifeRanges(Graph *g)
+void LivenessAnalysis::CalculateLifeIntervals(Graph *g)
 {
     for (auto bb = linear_order_.rbegin(); bb != linear_order_.rend(); bb++) {
         LiveSet live_set;
@@ -42,7 +42,7 @@ void LivenessAnalysis::CalculateLifeRanges(Graph *g)
         
         // process initial liveset
         for (auto inst: live_set.GetLiveSet()) {
-            AddInstLiveInterval(inst, bb_live_ranges_[*bb].GetStart(), bb_live_ranges_[*bb].GetEnd());
+            AddInstLiveInterval(inst, bb_live_interval_[*bb].GetStart(), bb_live_interval_[*bb].GetEnd());
         }
         
         // iterate over instructions
@@ -53,10 +53,10 @@ void LivenessAnalysis::CalculateLifeRanges(Graph *g)
                 continue;
             }
 
-            if (inst_live_ranges_.count(inst) == 0) {
-                inst_live_ranges_[inst].SetEnd(inst->GetLiveNumber() + 2);
+            if (inst_live_interval_.count(inst) == 0) {
+                inst_live_interval_[inst] = new LiveInterval{0, inst->GetLiveNumber() + 2};
             }
-            inst_live_ranges_[inst].SetStart(inst->GetLiveNumber());
+            inst_live_interval_[inst]->SetStart(inst->GetLiveNumber());
 
             IterateOverInputs(inst, live_set);
         }
@@ -70,23 +70,23 @@ void LivenessAnalysis::CalculateLifeRanges(Graph *g)
 
         if ((*bb)->IsLoopHeader()) {
             for (auto inst: live_set.GetLiveSet()) {
-                AddInstLiveInterval(inst, bb_live_ranges_[*bb].GetStart(),
-                                    bb_live_ranges_[(*bb)->GetLoop()->GetBackEdgeSource()].GetEnd());
+                AddInstLiveInterval(inst, bb_live_interval_[*bb].GetStart(),
+                                    bb_live_interval_[(*bb)->GetLoop()->GetBackEdgeSource()].GetEnd());
             }
         }
 
         live_inputs_[*bb] = live_set;
     }
 
-    for (auto item: inst_live_ranges_) {
+    for (auto item: inst_live_interval_) {
         if (item.first->GetType() == Type::InstJmp || item.first->GetOpcode() == Opcode::RET_VOID ||
             item.first->GetOpcode() == Opcode::CMP) {
-            inst_live_ranges_[item.first].SetStart(0);
-            inst_live_ranges_[item.first].SetEnd(0);
+            inst_live_interval_[item.first]->SetStart(0);
+            inst_live_interval_[item.first]->SetEnd(0);
         }
     }
 
-    g->SetLiveIntervals(inst_live_ranges_);
+    g->SetLiveIntervals(inst_live_interval_);
 }
 
 void LivenessAnalysis::AddPhiInputsToLiveset(BasicBlock *curr_bb, BasicBlock *succ, LiveSet& live_set)
@@ -110,7 +110,7 @@ void LivenessAnalysis::IterateOverInputs(Inst* inst, LiveSet& live_set)
         {
             auto inst_casted = inst->CastToInstWithOneInput();
             live_set.AddInst(inst_casted->GetInput1());
-            AddInstLiveInterval(inst_casted->GetInput1(), bb_live_ranges_[inst_casted->GetBB()].GetStart(),
+            AddInstLiveInterval(inst_casted->GetInput1(), bb_live_interval_[inst_casted->GetBB()].GetStart(),
                                 inst_casted->GetLiveNumber());
             break;
         }
@@ -119,9 +119,9 @@ void LivenessAnalysis::IterateOverInputs(Inst* inst, LiveSet& live_set)
             auto inst_casted = inst->CastToInstWithTwoInputs();
             live_set.AddInst(inst_casted->GetInput1());
             live_set.AddInst(inst_casted->GetInput2());
-            AddInstLiveInterval(inst_casted->GetInput1(), bb_live_ranges_[inst_casted->GetBB()].GetStart(),
+            AddInstLiveInterval(inst_casted->GetInput1(), bb_live_interval_[inst_casted->GetBB()].GetStart(),
                                 inst_casted->GetLiveNumber());
-            AddInstLiveInterval(inst_casted->GetInput2(), bb_live_ranges_[inst_casted->GetBB()].GetStart(),
+            AddInstLiveInterval(inst_casted->GetInput2(), bb_live_interval_[inst_casted->GetBB()].GetStart(),
                                 inst_casted->GetLiveNumber());
             break;
         }
@@ -130,7 +130,7 @@ void LivenessAnalysis::IterateOverInputs(Inst* inst, LiveSet& live_set)
             auto inst_casted = inst->CastToInstCall();
             for (auto input: inst_casted->GetArguments()) {
                 live_set.AddInst(input);
-                AddInstLiveInterval(input, bb_live_ranges_[inst_casted->GetBB()].GetStart(),
+                AddInstLiveInterval(input, bb_live_interval_[inst_casted->GetBB()].GetStart(),
                                     inst_casted->GetLiveNumber());
             }
             break;
@@ -140,7 +140,7 @@ void LivenessAnalysis::IterateOverInputs(Inst* inst, LiveSet& live_set)
             auto inst_casted = inst->CastToInstPhi();
             for (auto input: inst_casted->GetInputInst()) {
                 live_set.AddInst(input);
-                AddInstLiveInterval(input, bb_live_ranges_[inst_casted->GetBB()].GetStart(),
+                AddInstLiveInterval(input, bb_live_interval_[inst_casted->GetBB()].GetStart(),
                                     inst_casted->GetLiveNumber());
             }
             break;
@@ -152,9 +152,9 @@ void LivenessAnalysis::IterateOverInputs(Inst* inst, LiveSet& live_set)
 
 void LivenessAnalysis::AddInstLiveInterval(Inst* inst, uint32_t start, uint32_t end)
 {
-    if (inst_live_ranges_.count(inst) == 0) {
-        inst_live_ranges_[inst] = {start, end};
+    if (inst_live_interval_.count(inst) == 0) {
+        inst_live_interval_[inst] = new LiveInterval{start, end};
     } else {
-        inst_live_ranges_[inst].AddRange(start, end);
+        inst_live_interval_[inst]->AddInterval(start, end);
     }
 }

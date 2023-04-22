@@ -39,4 +39,12 @@ std::vector<T> ComputeVectorsDiff(const std::vector<T>& first, const std::vector
     return result;
 }
 
+template <typename T>
+void EraseElementFromVector(std::vector<T>& vector, T element)
+{
+    auto it = std::find(vector.begin(), vector.end(), element);
+    *it = vector.back();
+    vector.pop_back();
+}
+
 #endif // UTILS_H

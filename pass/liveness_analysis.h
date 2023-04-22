@@ -12,15 +12,15 @@ public:
 
 private:
     void InitLiveness();
-    void CalculateLifeRanges(Graph *g);
+    void CalculateLifeIntervals(Graph *g);
     void AddPhiInputsToLiveset(BasicBlock *curr_bb, BasicBlock *bb, LiveSet& live_set);
     void IterateOverInputs(Inst* inst, LiveSet& live_set);
     void AddInstLiveInterval(Inst* inst, uint32_t start, uint32_t end);
 
     std::vector<BasicBlock*> linear_order_;
     std::unordered_map<BasicBlock*, LiveSet> live_inputs_;
-    std::unordered_map<BasicBlock*, LiveRange> bb_live_ranges_;
-    std::unordered_map<Inst*, LiveRange> inst_live_ranges_;
+    std::unordered_map<BasicBlock*, LiveInterval> bb_live_interval_;
+    std::unordered_map<Inst*, LiveInterval*> inst_live_interval_;
 };
 
 #endif // LIVENESS_ANALYSIS_H
